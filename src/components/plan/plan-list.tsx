@@ -2,9 +2,9 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { CheckCircle, FileText, PlusCircle } from "lucide-react";
+import { CheckCircle, FileText, PlusCircle, Flame } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { Plan } from "./types";
+import type { Plan } from "@/lib/types";
 
 
 export default function PlanList({ plans, selectedPlanId, onSelectPlan }: { plans: Plan[], selectedPlanId: string, onSelectPlan: (plan: Plan) => void }) {
@@ -29,17 +29,26 @@ export default function PlanList({ plans, selectedPlanId, onSelectPlan }: { plan
                         <button
                             onClick={() => onSelectPlan(plan)}
                             className={cn(
-                                "w-full text-left p-4 rounded-lg border transition-all glass-card",
+                                "w-full text-left p-4 rounded-lg border-2 transition-all glass-card",
                                 selectedPlanId === plan.id 
-                                    ? "bg-primary/20 border-primary/60 shadow-lg shadow-primary/10" 
-                                    : "bg-muted/30 border-transparent hover:bg-muted/60 hover:border-primary/20"
+                                    ? "bg-primary/10 border-primary/50 shadow-lg shadow-primary/10" 
+                                    : "bg-muted/20 border-transparent hover:bg-muted/40 hover:border-primary/20"
                             )}
                         >
-                            <div className="flex items-center justify-between">
+                            <div className="flex items-start justify-between">
                                 <p className="font-semibold text-lg">{plan.name}</p>
-                                {plan.isActive && <CheckCircle className="w-5 h-5 text-primary" />}
+                                {plan.isActive && (
+                                    <div className="flex items-center gap-1.5 text-xs font-bold text-primary bg-primary/10 px-2 py-1 rounded-full">
+                                        <CheckCircle className="w-4 h-4" />
+                                        <span>Ativo</span>
+                                    </div>
+                                )}
                             </div>
                             <p className="text-sm text-muted-foreground mt-1">{plan.description}</p>
+                            <div className="flex items-center gap-2 text-sm text-amber-400 font-semibold mt-3 pt-3 border-t border-white/5">
+                                <Flame className="w-4 h-4"/>
+                                <span>{plan.targets.calories} kcal</span>
+                            </div>
                         </button>
                     </li>
                 ))}
