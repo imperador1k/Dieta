@@ -1,5 +1,6 @@
 
 
+
 import type { FoodDetails } from "@/services/usda";
 
 export type FoodItemData = {
@@ -17,10 +18,13 @@ export type FoodPortion = {
     portionDescription: string;
 }
 
+export type MealItem = (FoodItemData & { type: 'food' }) | (Dish & { type: 'dish', eaten?: boolean });
+
+
 export interface Meal {
     id: string;
     name: string;
-    items: FoodItemData[]; 
+    items: MealItem[]; 
     totalCalories: number;
     protein: number;
     carbs: number;
@@ -54,3 +58,5 @@ export interface Dish {
     ingredients: FoodItemData[];
     instructions: string;
 }
+
+    

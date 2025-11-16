@@ -5,13 +5,13 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { MoreVertical, PlusCircle, Utensils, Grape, Flame, Fish, Wheat, Droplet, StickyNote, Save } from "lucide-react";
+import { MoreVertical, PlusCircle, Utensils, Grape, Flame, Fish, Wheat, Droplet, StickyNote, Save, CookingPot } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { Textarea } from "../ui/textarea";
 import { FoodSearchDialog } from "./food-search-dialog";
-import type { FoodItemData, Meal } from "@/lib/types";
+import type { FoodItemData, Meal, MealItem, Dish } from "@/lib/types";
 import FoodItem from "./food-item";
 import { getFoodDetails } from "@/app/log/actions";
 
@@ -68,9 +68,10 @@ const MealNoteEditor = ({ note, onSave }: { note?: string; onSave: (newNote: str
 interface MealCategoriesWidgetProps {
     meals: Meal[];
     onMealsChange: (meals: Meal[]) => void;
+    savedDishes: Dish[];
 }
 
-export default function MealCategoriesWidget({ meals, onMealsChange }: MealCategoriesWidgetProps) {
+export default function MealCategoriesWidget({ meals, onMealsChange, savedDishes }: MealCategoriesWidgetProps) {
     const [isSearchOpen, setIsSearchOpen] = useState(false);
     const [activeMealId, setActiveMealId] = useState<string | null>(null);
     const [foodToEdit, setFoodToEdit] = useState<FoodItemData | null>(null);
@@ -106,66 +107,89 @@ export default function MealCategoriesWidget({ meals, onMealsChange }: MealCateg
         setIsSearchOpen(true);
     }
 
-    const confirmFoodInMeal = (foodData: FoodItemData) => {
+    const confirmItemInMeal = (item: MealItem) => {
         if (!activeMealId) return;
 
         const updatedMeals = meals.map(meal => {
             if (meal.id === activeMealId) {
-                const existingItemIndex = meal.items.findIndex(item => item.id === foodData.id);
+                const isDish = 'ingredients' in item;
+                const itemToAdd: MealItem = isDish ? { ...item, type: 'dish', eaten: false } : { ...item, type: 'food', eaten: false };
+
+                const existingItemIndex = meal.items.findIndex(i => i.id === item.id);
                 
                 let updatedItems;
                 if (existingItemIndex > -1) {
-                    // When updating, preserve the 'eaten' state if it exists
                     const currentItem = meal.items[existingItemIndex];
                     updatedItems = [...meal.items];
-                    updatedItems[existingItemIndex] = { ...foodData, eaten: currentItem.eaten };
+                    updatedItems[existingItemIndex] = { ...itemToAdd, eaten: currentItem.eaten };
                 } else {
-                    updatedItems = [...meal.items, { ...foodData, eaten: false }]; // Default to not eaten
+                    updatedItems = [...meal.items, itemToAdd];
                 }
 
-                const newTotals = updatedItems.reduce((totals, item) => {
-                    const servingMultiplier = item.servingSize / 100;
-                    totals.totalCalories += item.nutrients.calories * servingMultiplier;
-                    totals.protein += item.nutrients.protein * servingMultiplier;
-                    totals.carbs += item.nutrients.carbohydrates * servingMultiplier;
-                    totals.fat += item.nutrients.fat * servingMultiplier;
-                    return totals;
-                }, { totalCalories: 0, protein: 0, carbs: 0, fat: 0 });
-
-                return { ...meal, items: updatedItems, ...newTotals };
+                return { ...meal, items: updatedItems };
             }
             return meal;
         });
 
-        onMealsChange(updatedMeals);
+        onMealsChange(recalculateAllTotals(updatedMeals));
     };
+
+    const recalculateAllTotals = (mealsToRecalculate: Meal[]): Meal[] => {
+        return mealsToRecalculate.map(meal => {
+            const totals = meal.items.reduce((acc, item) => {
+                let itemTotals = { calories: 0, protein: 0, carbs: 0, fat: 0 };
+                if (item.type === 'food') {
+                    const multiplier = item.servingSize / 100;
+                    itemTotals = {
+                        calories: item.nutrients.calories * multiplier,
+                        protein: item.nutrients.protein * multiplier,
+                        carbs: item.nutrients.carbohydrates * multiplier,
+                        fat: item.nutrients.fat * multiplier,
+                    }
+                } else if (item.type === 'dish') {
+                    item.ingredients.forEach(ingredient => {
+                         const multiplier = ingredient.servingSize / 100;
+                         itemTotals.calories += ingredient.nutrients.calories * multiplier;
+                         itemTotals.protein += ingredient.nutrients.protein * multiplier;
+                         itemTotals.carbs += ingredient.nutrients.carbohydrates * multiplier;
+                         itemTotals.fat += ingredient.nutrients.fat * multiplier;
+                    });
+                }
+                acc.totalCalories += itemTotals.calories;
+                acc.protein += itemTotals.protein;
+                acc.carbs += itemTotals.carbs;
+                acc.fat += itemTotals.fat;
+                return acc;
+            }, { totalCalories: 0, protein: 0, carbs: 0, fat: 0 });
+
+            return { ...meal, ...totals };
+        });
+    }
     
-    const removeFoodFromMeal = (mealId: string, foodId: string) => {
+    const removeItemFromMeal = (mealId: string, itemId: string) => {
         const updatedMeals = meals.map(meal => {
             if (meal.id === mealId) {
-                const updatedItems = meal.items.filter(item => item.id !== foodId);
-                const newTotals = updatedItems.reduce((totals, item) => {
-                    const servingMultiplier = item.servingSize / 100;
-                    totals.totalCalories += item.nutrients.calories * servingMultiplier;
-                    totals.protein += item.nutrients.protein * servingMultiplier;
-                    totals.carbs += item.nutrients.carbohydrates * servingMultiplier;
-                    totals.fat += item.nutrients.fat * servingMultiplier;
-                    return totals;
-                }, { totalCalories: 0, protein: 0, carbs: 0, fat: 0 });
-
-                return { ...meal, items: updatedItems, ...newTotals };
+                const updatedItems = meal.items.filter(item => item.id !== itemId);
+                return { ...meal, items: updatedItems };
             }
             return meal;
         });
-        onMealsChange(updatedMeals);
+        onMealsChange(recalculateAllTotals(updatedMeals));
     }
 
-    const toggleFoodItemEaten = (mealId: string, foodId: string) => {
+    const toggleItemEaten = (mealId: string, itemId: string, newEatenState: boolean) => {
         const updatedMeals = meals.map(meal => {
             if (meal.id === mealId) {
-                const updatedItems = meal.items.map(item =>
-                    item.id === foodId ? { ...item, eaten: !item.eaten } : item
-                );
+                const updatedItems = meal.items.map(item => {
+                    if (item.id === itemId) {
+                        const updatedItem = { ...item, eaten: newEatenState };
+                        if (updatedItem.type === 'dish') {
+                            updatedItem.ingredients = updatedItem.ingredients.map(ing => ({...ing, eaten: newEatenState}));
+                        }
+                        return updatedItem;
+                    }
+                    return item;
+                });
                 return { ...meal, items: updatedItems };
             }
             return meal;
@@ -173,13 +197,40 @@ export default function MealCategoriesWidget({ meals, onMealsChange }: MealCateg
         onMealsChange(updatedMeals);
     };
 
+    const toggleDishIngredientEaten = (mealId: string, dishId: string, ingredientId: string) => {
+        const updatedMeals = meals.map(meal => {
+            if (meal.id === mealId) {
+                const updatedItems = meal.items.map(item => {
+                    if (item.id === dishId && item.type === 'dish') {
+                        let allEaten = true;
+                        const updatedIngredients = item.ingredients.map(ing => {
+                            if (ing.id === ingredientId) {
+                                const updatedIng = {...ing, eaten: !ing.eaten};
+                                if (!updatedIng.eaten) allEaten = false;
+                                return updatedIng;
+                            }
+                            if (!ing.eaten) allEaten = false;
+                            return ing;
+                        });
+                        return { ...item, ingredients: updatedIngredients, eaten: allEaten };
+                    }
+                    return item;
+                });
+                return { ...meal, items: updatedItems };
+            }
+            return meal;
+        });
+        onMealsChange(updatedMeals);
+    }
+
     return (
         <>
             <FoodSearchDialog
                 open={isSearchOpen}
                 onOpenChange={setIsSearchOpen}
-                onFoodConfirm={confirmFoodInMeal}
+                onConfirm={confirmItemInMeal}
                 foodToEdit={foodToEdit}
+                savedDishes={savedDishes}
             />
             <Card className="glass-card">
                 <CardHeader>
@@ -245,19 +296,24 @@ export default function MealCategoriesWidget({ meals, onMealsChange }: MealCateg
                                                         <div className="space-y-2">
                                                             <AnimatePresence>
                                                                 {meal.items.map(item => (
-                                                                    <FoodItem 
-                                                                        key={item.id} 
-                                                                        item={item} 
-                                                                        onRemove={() => removeFoodFromMeal(meal.id, item.id)}
-                                                                        onEdit={() => openFoodEditor(meal.id, item)}
-                                                                        onToggleEaten={() => toggleFoodItemEaten(meal.id, item.id)}
+                                                                    <FoodItem
+                                                                        key={item.id}
+                                                                        item={item}
+                                                                        onRemove={() => removeItemFromMeal(meal.id, item.id)}
+                                                                        onEdit={() => { if (item.type === 'food') openFoodEditor(meal.id, item) }}
+                                                                        onToggleEaten={(newState) => toggleItemEaten(meal.id, item.id, newState)}
+                                                                        onToggleIngredient={(ingredientId) => {
+                                                                            if (item.type === 'dish') {
+                                                                                toggleDishIngredientEaten(meal.id, item.id, ingredientId);
+                                                                            }
+                                                                        }}
                                                                     />
                                                                 ))}
                                                             </AnimatePresence>
                                                         </div>
                                                         <Button variant="outline" className="w-full" onClick={() => openFoodSearch(meal.id)}>
                                                             <PlusCircle className="mr-2 h-4 w-4" />
-                                                            Adicionar Alimento
+                                                            Adicionar Alimento ou Prato
                                                         </Button>
                                                         <MealNoteEditor note={meal.note} onSave={(newNote) => handleSaveNote(meal.id, newNote)} />
                                                     </div>
@@ -274,3 +330,5 @@ export default function MealCategoriesWidget({ meals, onMealsChange }: MealCateg
         </>
     )
 }
+
+    
