@@ -19,18 +19,18 @@ export default function PhotoView({ photo, onClose }: PhotoViewProps) {
     <Dialog open={!!photo} onOpenChange={(isOpen) => !isOpen && onClose()}>
       <AnimatePresence>
         {photo && (
-          <DialogContent className="p-0 sm:p-4 border-0 bg-transparent shadow-none w-full h-full sm:max-w-4xl flex flex-col items-center justify-center">
+          <DialogContent className="p-0 sm:p-4 border-0 bg-transparent shadow-none w-full h-full flex flex-col items-center justify-center">
             <motion.div
               layoutId={`photo-${photo.id}`}
               className="relative w-full h-full flex flex-col items-center justify-center"
             >
                 <Button variant="ghost" size="icon" className="absolute top-4 right-4 z-20 h-10 w-10 rounded-full bg-black/40 text-white hover:bg-black/60 hover:text-white" onClick={onClose}>
-                    <X className="h-6 w-6"/>
+                    
                     <span className="sr-only">Fechar</span>
                 </Button>
                 
                 <div className="w-full h-full flex items-center justify-center overflow-auto">
-                    <div className="relative w-auto h-auto max-w-full max-h-full flex-shrink-0">
+                    <div className="relative w-auto h-auto max-w-full max-h-[85vh] sm:max-h-[90vh] flex-shrink-0">
                         <Image
                           src={photo.imageUrl}
                           alt={`Evolução em ${photo.date}`}
