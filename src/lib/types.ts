@@ -61,6 +61,9 @@ export interface EvolutionPhoto {
     date: string; // ISO 8601 date string
     imageUrl: string;
     imageHint?: string;
+    weight?: number;
+    width: number;
+    height: number;
 }
 
 export interface BodyMeasurement {

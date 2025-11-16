@@ -7,8 +7,8 @@ import {
   FileText,
   User,
   BarChart2,
-  GalleryVertical,
   UtensilsCrossed,
+  GalleryThumbnails,
 } from 'lucide-react';
 import { Icons } from '@/components/icons';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
@@ -23,6 +23,7 @@ const navItems = [
   { href: '/meals', label: 'Refeições', icon: UtensilsCrossed },
   { href: '/log', label: 'Registo', icon: UtensilsCrossed },
   { href: '/progress', label: 'Progresso', icon: BarChart2 },
+  { href: '/gallery', label: 'Galeria', icon: GalleryThumbnails },
 ];
 
 function Header() {
@@ -138,9 +139,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       {!isGalleryPage && <Header />}
       <main className={cn(
         "flex-1",
-        !isGalleryPage && "pt-24 pb-24 md:pb-8"
+        isGalleryPage ? "w-full h-full" : "pt-24 pb-24 md:pb-8"
       )}>
-        <div className={cn(!isGalleryPage && "container mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8")}>
+        <div className={cn(!isGalleryPage ? "container mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8" : "h-full")}>
             {children}
         </div>
       </main>
