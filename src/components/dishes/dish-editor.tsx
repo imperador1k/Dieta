@@ -11,7 +11,7 @@ import { Separator } from "@/components/ui/separator";
 import { FoodSearchDialog } from "@/components/meals/food-search-dialog";
 import FoodItem from "@/components/meals/food-item";
 import { generateRecipe } from "@/app/log/actions";
-import { PlusCircle, Sparkles, Loader2, Save, CookingPot, Pencil, Trash, FileText, Fish, Wheat, Droplet, Flame } from "lucide-react";
+import { PlusCircle, Sparkles, Loader2, Save, CookingPot, Pencil, Trash, Flame, Fish, Wheat, Droplet } from "lucide-react";
 import type { Dish, FoodItemData } from "@/lib/types";
 
 interface DishEditorProps {
@@ -31,6 +31,7 @@ const MacroBadge = ({ Icon, value, unit, className }: { Icon: React.ElementType,
         </div>
     </div>
 );
+
 
 export function DishEditor({ open, onOpenChange, onSave, dish: initialDish }: DishEditorProps) {
     const [dish, setDish] = useState<Dish>(initialDish || { id: '', name: '', description: '', ingredients: [], instructions: '' });
