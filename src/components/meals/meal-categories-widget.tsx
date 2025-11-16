@@ -13,6 +13,7 @@ import { Textarea } from "../ui/textarea";
 import { FoodSearchDialog } from "./food-search-dialog";
 import type { FoodItemData, Meal } from "@/lib/types";
 import FoodItem from "./food-item";
+import { getFoodDetails } from "@/app/log/actions";
 
 const MacroBadge = ({ Icon, value, unit, className }: { Icon: React.ElementType, value: number, unit: string, className?: string }) => (
     <div className={cn("flex items-center gap-1 text-xs", className)}>
@@ -169,8 +170,8 @@ export default function MealCategoriesWidget({ meals, onMealsChange }: MealCateg
                 <CardHeader>
                     <div className="flex flex-wrap justify-between items-start gap-4">
                         <div className="flex-grow">
-                            <CardTitle>Calendário do Dia</CardTitle>
-                            <CardDescription>Adicione e organize as suas refeições para o dia selecionado.</CardDescription>
+                            <CardTitle>Estrutura do Dia</CardTitle>
+                            <CardDescription>Adicione e organize as suas refeições para a variação selecionada.</CardDescription>
                         </div>
                         <div className="flex flex-wrap items-center gap-2">
                             <Button variant="outline" onClick={addMealCategory}>
@@ -196,8 +197,8 @@ export default function MealCategoriesWidget({ meals, onMealsChange }: MealCateg
                     {meals.length === 0 ? (
                         <div className="text-center text-muted-foreground py-20 border-2 border-dashed border-muted-foreground/20 rounded-lg flex flex-col items-center justify-center">
                             <Utensils className="mx-auto h-12 w-12 text-muted-foreground/50" />
-                            <h3 className="mt-4 text-lg font-semibold">O seu dia está vazio</h3>
-                            <p className="mt-2 text-sm max-w-sm">Adicione uma refeição como "Pequeno-almoço" para começar a organizar o seu dia.</p>
+                            <h3 className="mt-4 text-lg font-semibold">Dia por preencher</h3>
+                            <p className="mt-2 text-sm max-w-sm">Adicione uma refeição como "Pequeno-almoço" para começar a estruturar este dia.</p>
                         </div>
                     ) : (
                         <Accordion type="multiple" defaultValue={meals.map(m => m.id)} className="space-y-4">
