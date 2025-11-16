@@ -1,0 +1,622 @@
+{
+  "entities": {
+    "UserGoal": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "UserGoal",
+      "type": "object",
+      "description": "Represents the dietary goals set by a user.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the user goal entity."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to User. (Relationship: User 1:N UserGoal)"
+        },
+        "calories": {
+          "type": "number",
+          "description": "Target daily calorie intake."
+        },
+        "proteins": {
+          "type": "number",
+          "description": "Target daily protein intake (in grams)."
+        },
+        "carbohydrates": {
+          "type": "number",
+          "description": "Target daily carbohydrate intake (in grams)."
+        },
+        "fats": {
+          "type": "number",
+          "description": "Target daily fat intake (in grams)."
+        },
+        "micronutrientTargets": {
+          "type": "array",
+          "description": "Array of micronutrient target objects.",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "calories",
+        "proteins",
+        "carbohydrates",
+        "fats"
+      ]
+    },
+    "DailyLog": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "DailyLog",
+      "type": "object",
+      "description": "Represents a user's daily food intake log.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the daily log entry."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to User. (Relationship: User 1:N DailyLog)"
+        },
+        "date": {
+          "type": "string",
+          "description": "Date of the log entry.",
+          "format": "date-time"
+        },
+        "meals": {
+          "type": "array",
+          "description": "Array of meal objects consumed during the day.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "totalCalories": {
+          "type": "number",
+          "description": "Total calories consumed in the log."
+        },
+        "totalProteins": {
+          "type": "number",
+          "description": "Total proteins consumed in the log (in grams)."
+        },
+        "totalCarbohydrates": {
+          "type": "number",
+          "description": "Total carbohydrates consumed in the log (in grams)."
+        },
+        "totalFats": {
+          "type": "number",
+          "description": "Total fats consumed in the log (in grams)."
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "date",
+        "meals",
+        "totalCalories",
+        "totalProteins",
+        "totalCarbohydrates",
+        "totalFats"
+      ]
+    },
+    "BodyMetric": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "BodyMetric",
+      "type": "object",
+      "description": "Represents a user's body metrics over time.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the body metric entry."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to User. (Relationship: User 1:N BodyMetric)"
+        },
+        "date": {
+          "type": "string",
+          "description": "Date of the body metric measurement.",
+          "format": "date-time"
+        },
+        "weight": {
+          "type": "number",
+          "description": "User's weight (in kilograms)."
+        },
+        "fatPercentage": {
+          "type": "number",
+          "description": "User's body fat percentage."
+        },
+        "muscleMass": {
+          "type": "number",
+          "description": "User's muscle mass (in kilograms)."
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "date",
+        "weight",
+        "fatPercentage",
+        "muscleMass"
+      ]
+    },
+    "CustomFood": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "CustomFood",
+      "type": "object",
+      "description": "Represents a food item created by the user.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the custom food item."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to User. (Relationship: User 1:N CustomFood)"
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the custom food item."
+        },
+        "calories": {
+          "type": "number",
+          "description": "Calorie content of the food item."
+        },
+        "proteins": {
+          "type": "number",
+          "description": "Protein content of the food item (in grams)."
+        },
+        "carbohydrates": {
+          "type": "number",
+          "description": "Carbohydrate content of the food item (in grams)."
+        },
+        "fats": {
+          "type": "number",
+          "description": "Fat content of the food item (in grams)."
+        },
+        "micronutrients": {
+          "type": "array",
+          "description": "List of micronutrients in the food item.",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "name",
+        "calories",
+        "proteins",
+        "carbohydrates",
+        "fats"
+      ]
+    },
+    "Photo": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Photo",
+      "type": "object",
+      "description": "Represents a user-uploaded photo with associated metrics.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the photo."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to User. (Relationship: User 1:N Photo)"
+        },
+        "date": {
+          "type": "string",
+          "description": "Date the photo was taken.",
+          "format": "date-time"
+        },
+        "weight": {
+          "type": "number",
+          "description": "User's weight at the time the photo was taken (in kilograms)."
+        },
+        "fatPercentage": {
+          "type": "number",
+          "description": "User's body fat percentage at the time the photo was taken."
+        },
+        "imageUrl": {
+          "type": "string",
+          "description": "URL of the uploaded photo.",
+          "format": "uri"
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "date",
+        "weight",
+        "fatPercentage",
+        "imageUrl"
+      ]
+    },
+    "User": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "User",
+      "type": "object",
+      "description": "Represents a user of the application.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the user entity."
+        },
+        "email": {
+          "type": "string",
+          "description": "User's email address.",
+          "format": "email"
+        },
+        "username": {
+          "type": "string",
+          "description": "User's display name."
+        }
+      },
+      "required": [
+        "id",
+        "email",
+        "username"
+      ]
+    },
+    "Meal": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Meal",
+      "type": "object",
+      "description": "Represents a meal entry in a daily log.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the meal."
+        },
+        "dailyLogId": {
+          "type": "string",
+          "description": "Reference to DailyLog. (Relationship: DailyLog 1:N Meal)"
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the meal (e.g., Breakfast, Lunch, Dinner)."
+        },
+        "foodItems": {
+          "type": "array",
+          "description": "Array of food item IDs included in the meal.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "calories": {
+          "type": "number",
+          "description": "Total calories in the meal."
+        },
+        "proteins": {
+          "type": "number",
+          "description": "Total protein content of the meal (in grams)."
+        },
+        "carbohydrates": {
+          "type": "number",
+          "description": "Total carbohydrate content of the meal (in grams)."
+        },
+        "fats": {
+          "type": "number",
+          "description": "Total fat content of the meal (in grams)."
+        }
+      },
+      "required": [
+        "id",
+        "dailyLogId",
+        "name",
+        "foodItems",
+        "calories",
+        "proteins",
+        "carbohydrates",
+        "fats"
+      ]
+    },
+    "MicronutrientTarget": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "MicronutrientTarget",
+      "type": "object",
+      "description": "Represents a target range for a specific micronutrient.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the micronutrient target."
+        },
+        "userGoalId": {
+          "type": "string",
+          "description": "Reference to UserGoal. (Relationship: UserGoal 1:N MicronutrientTarget)"
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the micronutrient (e.g., Sodium, Potassium, Vitamin D)."
+        },
+        "minimum": {
+          "type": "number",
+          "description": "Minimum acceptable intake level for the micronutrient."
+        },
+        "maximum": {
+          "type": "number",
+          "description": "Maximum acceptable intake level for the micronutrient."
+        },
+        "unit": {
+          "type": "string",
+          "description": "Unit of measurement for the micronutrient (e.g., mg, mcg, IU)."
+        }
+      },
+      "required": [
+        "id",
+        "userGoalId",
+        "name",
+        "minimum",
+        "maximum",
+        "unit"
+      ]
+    },
+    "FoodItem": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "FoodItem",
+      "type": "object",
+      "description": "Represents a single food item consumed in a meal.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the food item."
+        },
+        "mealId": {
+          "type": "string",
+          "description": "Reference to Meal. (Relationship: Meal 1:N FoodItem)"
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the food item."
+        },
+        "calories": {
+          "type": "number",
+          "description": "Calorie content of the food item."
+        },
+        "proteins": {
+          "type": "number",
+          "description": "Protein content of the food item (in grams)."
+        },
+        "carbohydrates": {
+          "type": "number",
+          "description": "Carbohydrate content of the food item (in grams)."
+        },
+        "fats": {
+          "type": "number",
+          "description": "Fat content of the food item (in grams)."
+        },
+        "micronutrients": {
+          "type": "array",
+          "description": "Micronutrient details for the food item (name, amount, unit).",
+          "items": {
+            "type": "string"
+          }
+        },
+        "quantity": {
+          "type": "number",
+          "description": "The amount of the food item consumed."
+        },
+        "unit": {
+          "type": "string",
+          "description": "The unit of measurement for the quantity (e.g., grams, ounces, servings)."
+        }
+      },
+      "required": [
+        "id",
+        "mealId",
+        "name",
+        "calories",
+        "proteins",
+        "carbohydrates",
+        "fats"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/users/{userId}",
+        "definition": {
+          "entityName": "User",
+          "schema": {
+            "$ref": "#/backend/entities/User"
+          },
+          "description": "Stores user profile information.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/userGoals/{userGoalId}",
+        "definition": {
+          "entityName": "UserGoal",
+          "schema": {
+            "$ref": "#/backend/entities/UserGoal"
+          },
+          "description": "Stores dietary goals for a user. Includes denormalized 'userId' for authorization independence.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user."
+            },
+            {
+              "name": "userGoalId",
+              "description": "The unique identifier of the user goal."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/dailyLogs/{dailyLogId}",
+        "definition": {
+          "entityName": "DailyLog",
+          "schema": {
+            "$ref": "#/backend/entities/DailyLog"
+          },
+          "description": "Stores daily food intake logs for a user. Includes denormalized 'userId' for authorization independence.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user."
+            },
+            {
+              "name": "dailyLogId",
+              "description": "The unique identifier of the daily log."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/bodyMetrics/{bodyMetricId}",
+        "definition": {
+          "entityName": "BodyMetric",
+          "schema": {
+            "$ref": "#/backend/entities/BodyMetric"
+          },
+          "description": "Stores body metrics over time for a user. Includes denormalized 'userId' for authorization independence.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user."
+            },
+            {
+              "name": "bodyMetricId",
+              "description": "The unique identifier of the body metric."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/customFoods/{customFoodId}",
+        "definition": {
+          "entityName": "CustomFood",
+          "schema": {
+            "$ref": "#/backend/entities/CustomFood"
+          },
+          "description": "Stores custom food items created by a user. Includes denormalized 'userId' for authorization independence.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user."
+            },
+            {
+              "name": "customFoodId",
+              "description": "The unique identifier of the custom food."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/photos/{photoId}",
+        "definition": {
+          "entityName": "Photo",
+          "schema": {
+            "$ref": "#/backend/entities/Photo"
+          },
+          "description": "Stores user-uploaded photos with associated metrics. Includes denormalized 'userId' for authorization independence.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user."
+            },
+            {
+              "name": "photoId",
+              "description": "The unique identifier of the photo."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/dailyLogs/{dailyLogId}/meals/{mealId}",
+        "definition": {
+          "entityName": "Meal",
+          "schema": {
+            "$ref": "#/backend/entities/Meal"
+          },
+          "description": "Stores meals for a specific user's daily log. Includes denormalized 'userId' for authorization independence.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user."
+            },
+            {
+              "name": "dailyLogId",
+              "description": "The unique identifier of the daily log."
+            },
+            {
+              "name": "mealId",
+              "description": "The unique identifier of the meal."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/userGoals/{userGoalId}/micronutrientTargets/{micronutrientTargetId}",
+        "definition": {
+          "entityName": "MicronutrientTarget",
+          "schema": {
+            "$ref": "#/backend/entities/MicronutrientTarget"
+          },
+          "description": "Stores micronutrient targets for a user's goal. Includes denormalized 'userId' and 'userGoalId' for authorization independence.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user."
+            },
+            {
+              "name": "userGoalId",
+              "description": "The unique identifier of the user goal."
+            },
+            {
+              "name": "micronutrientTargetId",
+              "description": "The unique identifier of the micronutrient target."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/dailyLogs/{dailyLogId}/meals/{mealId}/foodItems/{foodItemId}",
+        "definition": {
+          "entityName": "FoodItem",
+          "schema": {
+            "$ref": "#/backend/entities/FoodItem"
+          },
+          "description": "Stores food items for meals of a specific user's daily log. Includes denormalized 'userId', 'dailyLogId', and 'mealId' for authorization independence.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user."
+            },
+            {
+              "name": "dailyLogId",
+              "description": "The unique identifier of the daily log."
+            },
+            {
+              "name": "mealId",
+              "description": "The unique identifier of the meal."
+            },
+            {
+              "name": "foodItemId",
+              "description": "The unique identifier of the food item."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore structure is designed to align with the application's focus on personal use and data visualization, emphasizing simplicity and security. The structure is primarily user-centric, with data organized under each user's document to ensure clear ownership and access control.  This adheres to the principle of \"Path-Based ownership\".\n\n**Authorization Independence:** Each document includes only the data relevant to its own authorization, avoiding the need for `get()` calls in security rules. User-owned data resides under the `/users/{userId}` path. This structure ensures that access control can be implemented simply by checking `request.auth.uid == userId` in the rules.\n\n**QAPs Support (List Operations):** Segregation of data by user inherently supports secure `list` operations, as listing operations will always be scoped to a specific user's data, and rules can easily verify the requesting user matches the owner of the data.  There are no shared collections, so all lists will be scoped to the user.\n\nSpecifically:\n\n*   `/users/{userId}`: Contains user profiles. Other user-specific data (goals, logs, metrics, foods, and photos) are stored in subcollections.\n*   `/users/{userId}/userGoals/{userGoalId}`: Stores dietary goals set by the user. `userId` is denormalized to enable rules to validate the `userId`.\n*   `/users/{userId}/dailyLogs/{dailyLogId}`: Stores daily food intake logs. `userId` is denormalized to enable rules to validate the `userId`.\n*   `/users/{userId}/bodyMetrics/{bodyMetricId}`: Stores body metrics over time. `userId` is denormalized to enable rules to validate the `userId`.\n*   `/users/{userId}/customFoods/{customFoodId}`: Stores custom food items created by the user. `userId` is denormalized to enable rules to validate the `userId`.\n*   `/users/{userId}/photos/{photoId}`: Stores user-uploaded photos with associated metrics. `userId` is denormalized to enable rules to validate the `userId`.\n*   `/users/{userId}/dailyLogs/{dailyLogId}/meals/{mealId}`: Stores meals for the specific user's daily log, in a nested relationship. `userId` is denormalized to enable rules to validate the `userId`.\n*   `/users/{userId}/userGoals/{userGoalId}/micronutrientTargets/{micronutrientTargetId}`: Stores micronutrient targets for a user's goal. `userId` and `userGoalId` are denormalized to enable rules to validate the `userId` and `userGoalId`.\n*   `/users/{userId}/dailyLogs/{dailyLogId}/meals/{mealId}/foodItems/{foodItemId}`: Stores food items for meals of the specific user's daily log, in a nested relationship. `userId` and `dailyLogId` and `mealId` are denormalized to enable rules to validate the `userId`, `dailyLogId` and `mealId`."
+  }
+}

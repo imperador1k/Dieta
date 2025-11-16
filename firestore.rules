@@ -1,0 +1,279 @@
+/**
+ * @file Firestore Security Rules
+ * @description This ruleset enforces a strict user-ownership model for all data.
+ * All data is nested under /users/{userId}, ensuring that only the authenticated user
+ * can access their own data.
+ *
+ * Data Structure:
+ * - /users/{userId}: Stores user profile information.
+ * - /users/{userId}/userGoals/{userGoalId}: Stores user's dietary goals.
+ * - /users/{userId}/dailyLogs/{dailyLogId}: Stores user's daily food logs.
+ * - /users/{userId}/bodyMetrics/{bodyMetricId}: Stores user's body metrics.
+ * - /users/{userId}/customFoods/{customFoodId}: Stores user's custom food items.
+ * - /users/{userId}/photos/{photoId}: Stores user's photos.
+ * - /users/{userId}/dailyLogs/{dailyLogId}/meals/{mealId}: Stores user's meals in a daily log.
+ * - /users/{userId}/userGoals/{userGoalId}/micronutrientTargets/{micronutrientTargetId}: Stores user's micronutrient targets for a goal.
+ * - /users/{userId}/dailyLogs/{dailyLogId}/meals/{mealId}/foodItems/{foodItemId}: Stores user's food items for meals in a daily log.
+ *
+ * Key Security Decisions:
+ * - Strict user-ownership: Only the authenticated user can read or write their own data.
+ * - Data Denormalization: `userId` is denormalized in subcollections to allow for simpler security rules and prevent the need for expensive `get()` calls.
+ * - No Listing of Other Users: Listing operations are restricted to the current user's data.
+ */
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /**
+     * @description Allows users to read and write their own user profile.
+     * @path /users/{userId}
+     * @allow (create) - User with UID 'user_abc' can create their profile if request.auth.uid == 'user_abc'.
+     * @allow (get) - User with UID 'user_abc' can read their profile if request.auth.uid == 'user_abc'.
+     * @allow (update) - User with UID 'user_abc' can update their profile if request.auth.uid == 'user_abc'.
+     * @allow (delete) - User with UID 'user_abc' can delete their profile if request.auth.uid == 'user_abc'.
+     * @deny (create) - User with UID 'user_xyz' cannot create a profile for user 'user_abc'.
+     * @deny (get) - User with UID 'user_xyz' cannot read user 'user_abc''s profile.
+     * @principle Enforces document ownership for writes.
+     */
+    match /users/{userId} {
+      function isOwner(userId) {
+        return request.auth.uid == userId;
+      }
+
+      function isExistingOwner(userId) {
+          return isOwner(userId) && resource != null;
+      }
+
+      allow get: if isOwner(userId);
+      allow list: if false; // No listing of all users
+
+      allow create: if isOwner(userId);
+      allow update: if isExistingOwner(userId);
+      allow delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * @description Allows users to read and write their own user goals.
+     * @path /users/{userId}/userGoals/{userGoalId}
+     * @allow (create) - User with UID 'user_abc' can create a user goal under their profile.
+     * @allow (get) - User with UID 'user_abc' can read a user goal under their profile.
+     * @allow (update) - User with UID 'user_abc' can update a user goal under their profile.
+     * @allow (delete) - User with UID 'user_abc' can delete a user goal under their profile.
+     * @deny (create) - User with UID 'user_xyz' cannot create a user goal for user 'user_abc'.
+     * @deny (get) - User with UID 'user_xyz' cannot read user 'user_abc''s user goals.
+     * @principle Enforces document ownership for writes.
+     */
+    match /users/{userId}/userGoals/{userGoalId} {
+      function isOwner(userId) {
+        return request.auth.uid == userId;
+      }
+
+      function isExistingOwner(userId) {
+          return isOwner(userId) && resource != null;
+      }
+
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+
+      allow create: if isOwner(userId);
+      allow update: if isExistingOwner(userId);
+      allow delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * @description Allows users to read and write their own daily logs.
+     * @path /users/{userId}/dailyLogs/{dailyLogId}
+     * @allow (create) - User with UID 'user_abc' can create a daily log under their profile.
+     * @allow (get) - User with UID 'user_abc' can read a daily log under their profile.
+     * @allow (update) - User with UID 'user_abc' can update a daily log under their profile.
+     * @allow (delete) - User with UID 'user_abc' can delete a daily log under their profile.
+     * @deny (create) - User with UID 'user_xyz' cannot create a daily log for user 'user_abc'.
+     * @deny (get) - User with UID 'user_xyz' cannot read user 'user_abc''s daily logs.
+     * @principle Enforces document ownership for writes.
+     */
+    match /users/{userId}/dailyLogs/{dailyLogId} {
+      function isOwner(userId) {
+        return request.auth.uid == userId;
+      }
+
+      function isExistingOwner(userId) {
+          return isOwner(userId) && resource != null;
+      }
+
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+
+      allow create: if isOwner(userId);
+      allow update: if isExistingOwner(userId);
+      allow delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * @description Allows users to read and write their own body metrics.
+     * @path /users/{userId}/bodyMetrics/{bodyMetricId}
+     * @allow (create) - User with UID 'user_abc' can create a body metric under their profile.
+     * @allow (get) - User with UID 'user_abc' can read a body metric under their profile.
+     * @allow (update) - User with UID 'user_abc' can update a body metric under their profile.
+     * @allow (delete) - User with UID 'user_abc' can delete a body metric under their profile.
+     * @deny (create) - User with UID 'user_xyz' cannot create a body metric for user 'user_abc'.
+     * @deny (get) - User with UID 'user_xyz' cannot read user 'user_abc''s body metrics.
+     * @principle Enforces document ownership for writes.
+     */
+    match /users/{userId}/bodyMetrics/{bodyMetricId} {
+      function isOwner(userId) {
+        return request.auth.uid == userId;
+      }
+
+      function isExistingOwner(userId) {
+          return isOwner(userId) && resource != null;
+      }
+
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+
+      allow create: if isOwner(userId);
+      allow update: if isExistingOwner(userId);
+      allow delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * @description Allows users to read and write their own custom foods.
+     * @path /users/{userId}/customFoods/{customFoodId}
+     * @allow (create) - User with UID 'user_abc' can create a custom food under their profile.
+     * @allow (get) - User with UID 'user_abc' can read a custom food under their profile.
+     * @allow (update) - User with UID 'user_abc' can update a custom food under their profile.
+     * @allow (delete) - User with UID 'user_abc' can delete a custom food under their profile.
+     * @deny (create) - User with UID 'user_xyz' cannot create a custom food for user 'user_abc'.
+     * @deny (get) - User with UID 'user_xyz' cannot read user 'user_abc''s custom foods.
+     * @principle Enforces document ownership for writes.
+     */
+    match /users/{userId}/customFoods/{customFoodId} {
+      function isOwner(userId) {
+        return request.auth.uid == userId;
+      }
+
+      function isExistingOwner(userId) {
+          return isOwner(userId) && resource != null;
+      }
+
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+
+      allow create: if isOwner(userId);
+      allow update: if isExistingOwner(userId);
+      allow delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * @description Allows users to read and write their own photos.
+     * @path /users/{userId}/photos/{photoId}
+     * @allow (create) - User with UID 'user_abc' can create a photo under their profile.
+     * @allow (get) - User with UID 'user_abc' can read a photo under their profile.
+     * @allow (update) - User with UID 'user_abc' can update a photo under their profile.
+     * @allow (delete) - User with UID 'user_abc' can delete a photo under their profile.
+     * @deny (create) - User with UID 'user_xyz' cannot create a photo for user 'user_abc'.
+     * @deny (get) - User with UID 'user_xyz' cannot read user 'user_abc''s photos.
+     * @principle Enforces document ownership for writes.
+     */
+    match /users/{userId}/photos/{photoId} {
+      function isOwner(userId) {
+        return request.auth.uid == userId;
+      }
+
+      function isExistingOwner(userId) {
+          return isOwner(userId) && resource != null;
+      }
+
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+
+      allow create: if isOwner(userId);
+      allow update: if isExistingOwner(userId);
+      allow delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * @description Allows users to read and write their own meals.
+     * @path /users/{userId}/dailyLogs/{dailyLogId}/meals/{mealId}
+     * @allow (create) - User with UID 'user_abc' can create a meal under their daily log.
+     * @allow (get) - User with UID 'user_abc' can read a meal under their daily log.
+     * @allow (update) - User with UID 'user_abc' can update a meal under their daily log.
+     * @allow (delete) - User with UID 'user_abc' can delete a meal under their daily log.
+     * @deny (create) - User with UID 'user_xyz' cannot create a meal for user 'user_abc'.
+     * @deny (get) - User with UID 'user_xyz' cannot read user 'user_abc''s meals.
+     * @principle Enforces document ownership for writes.
+     */
+    match /users/{userId}/dailyLogs/{dailyLogId}/meals/{mealId} {
+      function isOwner(userId) {
+        return request.auth.uid == userId;
+      }
+
+      function isExistingOwner(userId) {
+          return isOwner(userId) && resource != null;
+      }
+
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+
+      allow create: if isOwner(userId);
+      allow update: if isExistingOwner(userId);
+      allow delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * @description Allows users to read and write their own micronutrient targets.
+     * @path /users/{userId}/userGoals/{userGoalId}/micronutrientTargets/{micronutrientTargetId}
+     * @allow (create) - User with UID 'user_abc' can create a micronutrient target under their user goal.
+     * @allow (get) - User with UID 'user_abc' can read a micronutrient target under their user goal.
+     * @allow (update) - User with UID 'user_abc' can update a micronutrient target under their user goal.
+     * @allow (delete) - User with UID 'user_abc' can delete a micronutrient target under their user goal.
+     * @deny (create) - User with UID 'user_xyz' cannot create a micronutrient target for user 'user_abc'.
+     * @deny (get) - User with UID 'user_xyz' cannot read user 'user_abc''s micronutrient targets.
+     * @principle Enforces document ownership for writes.
+     */
+    match /users/{userId}/userGoals/{userGoalId}/micronutrientTargets/{micronutrientTargetId} {
+      function isOwner(userId) {
+        return request.auth.uid == userId;
+      }
+
+      function isExistingOwner(userId) {
+          return isOwner(userId) && resource != null;
+      }
+
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+
+      allow create: if isOwner(userId);
+      allow update: if isExistingOwner(userId);
+      allow delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * @description Allows users to read and write their own food items.
+     * @path /users/{userId}/dailyLogs/{dailyLogId}/meals/{mealId}/foodItems/{foodItemId}
+     * @allow (create) - User with UID 'user_abc' can create a food item under their meal.
+     * @allow (get) - User with UID 'user_abc' can read a food item under their meal.
+     * @allow (update) - User with UID 'user_abc' can update a food item under their meal.
+     * @allow (delete) - User with UID 'user_abc' can delete a food item under their meal.
+     * @deny (create) - User with UID 'user_xyz' cannot create a food item for user 'user_abc'.
+     * @deny (get) - User with UID 'user_xyz' cannot read user 'user_abc''s food items.
+     * @principle Enforces document ownership for writes.
+     */
+    match /users/{userId}/dailyLogs/{dailyLogId}/meals/{mealId}/foodItems/{foodItemId} {
+      function isOwner(userId) {
+        return request.auth.uid == userId;
+      }
+
+      function isExistingOwner(userId) {
+          return isOwner(userId) && resource != null;
+      }
+
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+
+      allow create: if isOwner(userId);
+      allow update: if isExistingOwner(userId);
+      allow delete: if isExistingOwner(userId);
+    }
+  }
+}
