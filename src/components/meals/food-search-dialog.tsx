@@ -311,26 +311,28 @@ export function FoodSearchDialog({
     return (
         <Dialog open={open} onOpenChange={handleOpenChange}>
             <DialogContent className="sm:max-w-lg p-0">
-                <div className='p-6 space-y-4'>
-                    <DialogHeader className='text-left'>
-                        <DialogTitle className='text-2xl text-primary font-bold'>Descobrir Alimentos</DialogTitle>
-                        <DialogDescription>
-                            Encontre alimentos na nossa base de dados e adicione-os às suas refeições
-                        </DialogDescription>
-                    </DialogHeader>
+                {!isEditing && (
+                    <div className='p-6 space-y-4'>
+                        <DialogHeader className='text-left'>
+                            <DialogTitle className='text-2xl text-primary font-bold'>Descobrir Alimentos</DialogTitle>
+                            <DialogDescription>
+                                Encontre alimentos na nossa base de dados e adicione-os às suas refeições
+                            </DialogDescription>
+                        </DialogHeader>
 
-                    <Separator />
+                        <Separator />
 
-                    <div className="relative">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                        <Input
-                            placeholder="Procure por alimentos (ex: frango, arroz, maçã...)"
-                            value={query}
-                            onChange={e => setQuery(e.target.value)}
-                            className='h-12 pl-11 text-base border-2 border-muted focus-visible:border-primary focus-visible:ring-primary/20 focus-visible:ring-4'
-                        />
+                        <div className="relative">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                            <Input
+                                placeholder="Procure por alimentos (ex: frango, arroz, maçã...)"
+                                value={query}
+                                onChange={e => setQuery(e.target.value)}
+                                className='h-12 pl-11 text-base border-2 border-muted focus-visible:border-primary focus-visible:ring-primary/20 focus-visible:ring-4'
+                            />
+                        </div>
                     </div>
-                </div>
+                )}
                 
                 <AnimatePresence mode="wait">
                    {isPending ? (
