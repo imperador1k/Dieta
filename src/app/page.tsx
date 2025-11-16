@@ -3,7 +3,7 @@
 import { AppShell } from '@/components/layout/app-shell';
 import DailyEnergyWidget from '@/components/dashboard/daily-energy-widget';
 import BodyTrendsWidget from '@/components/dashboard/body-trends-widget';
-import MicronutrientsWidget from '@/components/dashboard/micronutrients-widget';
+import TodaysMealsWidget from '@/components/dashboard/todays-meals-widget';
 import { motion } from 'framer-motion';
 
 const containerVariants = {
@@ -42,7 +42,7 @@ export default function DashboardPage() {
         </motion.div>
         <motion.div className="lg:col-span-2 space-y-6" variants={itemVariants}>
           <BodyTrendsWidget />
-          <MicronutrientsWidget />
+          <TodaysMealsWidget />
         </motion.div>
       </motion.div>
     </AppShell>
