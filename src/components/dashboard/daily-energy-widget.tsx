@@ -15,11 +15,9 @@ const macros = {
 const CalorieCircularProgress = ({
   consumed,
   goal,
-  delay = 0,
 }: {
   consumed: number;
   goal: number;
-  delay?: number;
 }) => {
   const radius = 65;
   const strokeWidth = 12;
@@ -50,7 +48,7 @@ const CalorieCircularProgress = ({
           transform={`rotate(-90 ${radius + strokeWidth/2} ${radius + strokeWidth/2})`}
           initial={{ strokeDashoffset: circumference }}
           animate={{ strokeDashoffset }}
-          transition={{ duration: 1.2, ease: "circOut", delay }}
+          transition={{ duration: 1.2, ease: "circOut", delay: 0.2 }}
         />
         <defs>
             <linearGradient id="calorieGradient" x1="0%" y1="0%" x2="0%" y2="100%">
@@ -64,7 +62,7 @@ const CalorieCircularProgress = ({
             className="text-4xl font-bold text-foreground tracking-tighter"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: delay + 0.2 }}
+            transition={{ duration: 0.5, delay: 0.4 }}
           >
               {Math.round(consumed)}
           </motion.span>
@@ -92,12 +90,7 @@ const MacroLinearProgress = ({
 }) => {
     const percentage = (consumed / goal) * 100;
     return (
-        <motion.div 
-            className="flex flex-col gap-2"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay }}
-        >
+        <div className="flex flex-col gap-2">
             <div className="flex justify-between items-center">
                 <div className='flex items-center gap-2'>
                     <Icon className="w-4 h-4" style={{ color }} />
@@ -114,7 +107,7 @@ const MacroLinearProgress = ({
                     transition={{ duration: 1, ease: 'easeOut', delay: delay + 0.3 }}
                 />
             </div>
-        </motion.div>
+        </div>
     )
 }
 
@@ -137,7 +130,7 @@ export default function DailyEnergyWidget() {
                 goal={macros.protein.goal}
                 color={macros.protein.color}
                 Icon={macros.protein.icon}
-                delay={0.2}
+                delay={0.4}
             />
             <MacroLinearProgress 
                 label="Carboidratos"
@@ -145,7 +138,7 @@ export default function DailyEnergyWidget() {
                 goal={macros.carbs.goal}
                 color={macros.carbs.color}
                 Icon={macros.carbs.icon}
-                delay={0.4}
+                delay={0.6}
             />
             <MacroLinearProgress 
                 label="Gordura"
@@ -153,7 +146,7 @@ export default function DailyEnergyWidget() {
                 goal={macros.fat.goal}
                 color={macros.fat.color}
                 Icon={macros.fat.icon}
-                delay={0.6}
+                delay={0.8}
             />
         </div>
       </CardContent>

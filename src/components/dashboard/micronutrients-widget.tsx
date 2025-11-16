@@ -79,9 +79,14 @@ export default function MicronutrientsWidget() {
                     
                     return (
                         <div key={micro.name} className="flex items-center gap-4">
-                            <div className="bg-muted/30 p-2.5 rounded-lg">
+                            <motion.div 
+                                className="bg-muted/30 p-2.5 rounded-lg"
+                                initial={{ scale: 0.5, opacity: 0 }}
+                                animate={{ scale: 1, opacity: 1 }}
+                                transition={{ duration: 0.5, delay: index * 0.1 }}
+                            >
                                 <micro.icon className="h-5 w-5" style={{ color: micro.color }} />
-                            </div>
+                            </motion.div>
                             <div className="flex-1 space-y-1">
                                 <div className="flex justify-between items-baseline">
                                     <p className="font-medium text-foreground text-sm">{micro.name}</p>
@@ -90,7 +95,7 @@ export default function MicronutrientsWidget() {
                                         /{micro.goal} {micro.unit}
                                     </p>
                                 </div>
-                                <ProgressBar value={percentage} color={micro.color} delay={index * 0.15} />
+                                <ProgressBar value={percentage} color={micro.color} delay={index * 0.15 + 0.2} />
                             </div>
                         </div>
                     )

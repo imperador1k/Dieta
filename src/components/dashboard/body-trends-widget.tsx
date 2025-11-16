@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/chart";
 import { AreaChart, Area, CartesianGrid, XAxis, Tooltip } from "recharts";
 import { Weight, Percent, TrendingUp } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 const chartData = [
   { month: "Jan", weight: 80, fat: 20 },
@@ -70,7 +71,7 @@ export default function BodyTrendsWidget() {
                 formatter={(value, name) => (
                   <div className="flex items-center gap-2">
                     <span className="font-semibold capitalize" style={{ color: chartConfig[name as keyof typeof chartConfig].color }}>
-                      {name}
+                      {chartConfig[name as keyof typeof chartConfig].label}
                     </span>
                     <span>{value}{name === 'weight' ? ' kg' : '%'}</span>
                   </div>
@@ -85,6 +86,8 @@ export default function BodyTrendsWidget() {
               stroke="var(--color-weight)"
               strokeWidth={2.5}
               stackId="a"
+              dot={false}
+              activeDot={{ r: 5, className: 'chart-glow' }}
             />
              <Area
               dataKey="fat"
@@ -93,6 +96,8 @@ export default function BodyTrendsWidget() {
               stroke="var(--color-fat)"
               strokeWidth={2}
               stackId="b"
+              dot={false}
+              activeDot={{ r: 5, className: 'chart-glow' }}
             />
           </AreaChart>
         </ChartContainer>
