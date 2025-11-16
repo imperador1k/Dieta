@@ -34,10 +34,10 @@ const SingleFoodItem = ({
                 <AnimatePresence mode="wait">
                     <motion.div
                         key={item.eaten ? 'eaten' : 'uneaten'}
-                        initial={{ scale: 0.5, opacity: 0, rotate: -30 }}
+                        initial={{ scale: 0.5, opacity: 0, rotate: -20 }}
                         animate={{ scale: 1, opacity: 1, rotate: 0 }}
-                        exit={{ scale: 0.5, opacity: 0, rotate: 30 }}
-                        transition={{ duration: 0.2 }}
+                        exit={{ scale: 0.5, opacity: 0, rotate: 20 }}
+                        transition={{ type: "spring", stiffness: 400, damping: 25, duration: 0.15 }}
                     >
                         {item.eaten ? (
                             <CheckCircle2 className="w-5 h-5 text-primary" />
@@ -109,10 +109,10 @@ const DishItem = ({
                         <AnimatePresence mode="wait">
                             <motion.div
                                 key={item.eaten ? 'eaten' : 'uneaten'}
-                                initial={{ scale: 0.5, opacity: 0, rotate: -30 }}
+                                initial={{ scale: 0.5, opacity: 0, rotate: -20 }}
                                 animate={{ scale: 1, opacity: 1, rotate: 0 }}
-                                exit={{ scale: 0.5, opacity: 0, rotate: 30 }}
-                                transition={{ duration: 0.2 }}
+                                exit={{ scale: 0.5, opacity: 0, rotate: 20 }}
+                                transition={{ type: "spring", stiffness: 400, damping: 25, duration: 0.15 }}
                             >
                                 {item.eaten ? <CheckCircle2 className="w-5 h-5 text-primary" /> : <Circle className="w-5 h-5 text-muted-foreground/50" />}
                             </motion.div>
@@ -147,10 +147,10 @@ const DishItem = ({
                                 <AnimatePresence mode="wait">
                                      <motion.div
                                         key={ingredient.eaten ? 'eaten' : 'uneaten'}
-                                        initial={{ scale: 0.5, opacity: 0 }}
-                                        animate={{ scale: 1, opacity: 1 }}
-                                        exit={{ scale: 0.5, opacity: 0}}
-                                        transition={{ duration: 0.2 }}
+                                        initial={{ scale: 0.5, opacity: 0, rotate: -20 }}
+                                        animate={{ scale: 1, opacity: 1, rotate: 0 }}
+                                        exit={{ scale: 0.5, opacity: 0, rotate: 20 }}
+                                        transition={{ type: "spring", stiffness: 400, damping: 25, duration: 0.15 }}
                                     >
                                         {ingredient.eaten ? <CheckCircle2 className="w-4 h-4 text-primary" /> : <Circle className="w-4 h-4 text-muted-foreground/50" />}
                                     </motion.div>
