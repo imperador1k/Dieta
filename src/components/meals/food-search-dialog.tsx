@@ -8,13 +8,16 @@ import { Button } from '@/components/ui/button';
 import { getFoodDetails, searchFood } from '@/app/log/actions';
 import type { FoodSearchResult, FoodDetails } from '@/services/usda';
 import type { FoodItemData } from '@/lib/types';
-import { Loader2, Plus, PlusCircle, Scale, Utensils, Flame, Fish, Wheat, Droplet, Pencil } from 'lucide-react';
+import { Loader2, Plus, PlusCircle, Scale, Utensils, Flame, Fish, Wheat, Droplet, Pencil, Search, CircleDashed } from 'lucide-react';
 import { ScrollArea } from '../ui/scroll-area';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useDebounce } from '@/hooks/use-debounce';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '../ui/label';
+import { Skeleton } from '../ui/skeleton';
+import { Separator } from '../ui/separator';
 
+const suggestionChips = ["Frango", "Arroz", "Maçã", "Salmão", "Ovo", "Batata doce"];
 
 const SearchResultItem = ({
     result,
@@ -32,7 +35,7 @@ const SearchResultItem = ({
     >
         <button
             onClick={() => onSelect(result)}
-            className="w-full text-left p-3 rounded-lg hover:bg-muted transition-colors flex flex-col gap-2 border bg-background/50"
+            className="w-full text-left p-3 rounded-lg hover:bg-muted/80 transition-colors flex flex-col gap-2 border bg-muted/40"
         >
             <div className="flex items-center justify-between">
                 <div className='flex-1'>
@@ -193,6 +196,25 @@ const AddOrEditFoodDetails = ({
     )
 }
 
+const SearchSkeleton = () => (
+    <div className="space-y-3">
+        {[...Array(3)].map((_, i) => (
+            <div key={i} className="p-3 rounded-lg flex flex-col gap-2 border bg-muted/20">
+                <div className="flex items-center justify-between">
+                    <Skeleton className="h-5 w-3/5" />
+                    <CircleDashed className="w-5 h-5 text-muted-foreground/30 animate-spin" />
+                </div>
+                 <div className="flex items-center justify-start gap-4 text-xs text-muted-foreground border-t border-dashed pt-2 mt-2">
+                    <Skeleton className="h-4 w-1/4" />
+                    <Skeleton className="h-4 w-1/4" />
+                    <Skeleton className="h-4 w-1/4" />
+                </div>
+            </div>
+        ))}
+    </div>
+)
+
+
 export function FoodSearchDialog({
     open,
     onOpenChange,
@@ -279,36 +301,53 @@ export function FoodSearchDialog({
         }
     }
 
-    const isPending = isSearching || isLoadingDetails;
+    const isPending = isLoadingDetails;
 
     const currentView = editingFoodDetails ? 'details' : selectedFood ? 'details' : 'search';
     const foodForDetails = editingFoodDetails || selectedFood;
+    
+    const hasSearchQuery = debouncedQuery.length > 1;
 
     return (
         <Dialog open={open} onOpenChange={handleOpenChange}>
-            <DialogContent className="sm:max-w-lg">
-                <DialogHeader>
-                    <DialogTitle>{isEditing ? 'Editar Alimento' : 'Adicionar Alimento'}</DialogTitle>
-                     <DialogDescription>
-                        {currentView === 'details' ? 'Ajuste a porção do alimento.' : 'Procure um alimento para adicionar à sua refeição.'}
-                    </DialogDescription>
-                </DialogHeader>
+            <DialogContent className="sm:max-w-lg p-0">
+                <div className='p-6 space-y-4'>
+                    <DialogHeader className='text-left'>
+                        <DialogTitle className='text-2xl text-primary font-bold'>Descobrir Alimentos</DialogTitle>
+                        <DialogDescription>
+                            Encontre alimentos na nossa base de dados e adicione-os às suas refeições
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <Separator />
+
+                    <div className="relative">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                        <Input
+                            placeholder="Procure por alimentos (ex: frango, arroz, maçã...)"
+                            value={query}
+                            onChange={e => setQuery(e.target.value)}
+                            className='h-12 pl-11 text-base border-2 border-muted focus-visible:border-primary focus-visible:ring-primary/20 focus-visible:ring-4'
+                        />
+                    </div>
+                </div>
                 
                 <AnimatePresence mode="wait">
-                   {isPending && currentView !== 'search' && (
-                        <div className="flex justify-center items-center h-72">
+                   {isPending ? (
+                        <div className="flex justify-center items-center h-96">
                             <Loader2 className="w-8 h-8 animate-spin text-primary" />
                         </div>
-                   )}
-                   {!isPending && currentView === 'details' && foodForDetails ? (
-                        <AddOrEditFoodDetails
-                            key={isEditing ? foodToEdit?.id : 'add'}
-                            food={foodForDetails}
-                            onConfirm={handleConfirmFood}
-                            onBack={() => setSelectedFood(null)}
-                            isEditing={isEditing}
-                            originalId={foodToEdit?.id}
-                        />
+                   ) : currentView === 'details' && foodForDetails ? (
+                        <div className='p-6 pt-0'>
+                            <AddOrEditFoodDetails
+                                key={isEditing ? foodToEdit?.id : 'add'}
+                                food={foodForDetails}
+                                onConfirm={handleConfirmFood}
+                                onBack={() => setSelectedFood(null)}
+                                isEditing={isEditing}
+                                originalId={foodToEdit?.id}
+                            />
+                        </div>
                    ) : (
                         <motion.div
                             key="search"
@@ -316,37 +355,47 @@ export function FoodSearchDialog({
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
                             transition={{ duration: 0.2 }}
-                            className="space-y-4"
+                            className="px-6 pb-6 space-y-4"
                         >
-                            <Input
-                                placeholder="Ex: Frango grelhado, whey..."
-                                value={query}
-                                onChange={e => setQuery(e.target.value)}
-                                className='bg-background/80'
-                            />
-                            <ScrollArea className="h-72">
-                                <div className="pr-4">
-                                    {isSearching && (
-                                        <div className="flex justify-center items-center h-full p-8">
-                                            <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                            <ScrollArea className="h-96 -mx-6">
+                                <div className="px-6">
+                                    {isSearching ? (
+                                        <SearchSkeleton />
+                                    ) : hasSearchQuery ? (
+                                        <>
+                                            {results.length === 0 && (
+                                                <p className="text-center text-sm text-muted-foreground p-8">
+                                                    Nenhum resultado encontrado para "{debouncedQuery}".
+                                                </p>
+                                            )}
+                                            <div className="space-y-2">
+                                                <AnimatePresence>
+                                                    {results.map(result => (
+                                                        <SearchResultItem
+                                                            key={result.fdcId}
+                                                            result={result}
+                                                            onSelect={handleSelectResult}
+                                                        />
+                                                    ))}
+                                                </AnimatePresence>
+                                            </div>
+                                        </>
+                                    ) : (
+                                        <div className='flex flex-col items-center justify-center text-center h-full pt-16'>
+                                            <div className="flex items-center justify-center w-20 h-20 bg-muted rounded-full mb-6">
+                                                <Search className="w-10 h-10 text-muted-foreground" />
+                                            </div>
+                                            <h3 className="font-semibold text-lg">Procure por alimentos</h3>
+                                            <p className='text-muted-foreground text-sm max-w-xs'>Comece a digitar para encontrar alimentos na nossa base de dados</p>
+                                            <div className='flex flex-wrap gap-2 justify-center mt-6'>
+                                                {suggestionChips.map(chip => (
+                                                    <Button key={chip} variant="outline" size="sm" onClick={() => setQuery(chip)}>
+                                                        {chip}
+                                                    </Button>
+                                                ))}
+                                            </div>
                                         </div>
                                     )}
-                                    {!isSearching && results.length === 0 && debouncedQuery.length > 2 && (
-                                        <p className="text-center text-sm text-muted-foreground p-8">
-                                            Nenhum resultado encontrado para "{debouncedQuery}".
-                                        </p>
-                                    )}
-                                    <div className="space-y-2">
-                                        <AnimatePresence>
-                                            {results.map(result => (
-                                                <SearchResultItem
-                                                    key={result.fdcId}
-                                                    result={result}
-                                                    onSelect={handleSelectResult}
-                                                />
-                                            ))}
-                                        </AnimatePresence>
-                                    </div>
                                 </div>
                             </ScrollArea>
                         </motion.div>
