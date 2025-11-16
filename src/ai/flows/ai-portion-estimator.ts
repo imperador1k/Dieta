@@ -16,7 +16,7 @@ const AiPortionEstimatorInputSchema = z.object({
 export type AiPortionEstimatorInput = z.infer<typeof AiPortionEstimatorInputSchema>;
 
 const PortionSchema = z.object({
-    description: z.string().describe('The description of the portion, e.g., "1 medium" or "1 cup, sliced".'),
+    description: z.string().describe('The description of the portion, e.g., "1 medium" or "1 cup, sliced". Must be in Portuguese.'),
     gramWeight: z.number().describe('The estimated weight of the portion in grams.'),
 });
 
@@ -35,9 +35,13 @@ const aiPortionEstimatorPrompt = ai.definePrompt({
   output: { schema: AiPortionEstimatorOutputSchema },
   prompt: `You are an expert nutritionist. A user will provide a food item, and your task is to provide common household portion sizes for it.
 
+**IMPORTANT RULES:**
+1.  All output descriptions **MUST** be in **European Portuguese (Portugal)**.
+2.  All units of measurement **MUST** be in the **metric system** (e.g., cm, ml, etc.). Do not use imperial units like inches (' or ").
+
 Key Responsibilities:
 1.  **Analyze Food Item:** Understand the provided food item.
-2.  **Identify Common Portions:** Determine typical serving sizes (e.g., "1 medium", "1 cup, sliced", "1 slice").
+2.  **Identify Common Portions:** Determine typical serving sizes (e.g., "1 média", "1 chávena, fatiada", "1 fatia").
 3.  **Estimate Gram Weight:** Provide a realistic gram weight for each portion.
 4.  **Structured Output:** Return the data as an array of portion objects in the specified JSON format. If no common portions can be determined, return an empty array.
 
@@ -46,13 +50,13 @@ Food Item: "Banana, raw"
 Your Output:
 {
   "portions": [
-    { "description": "1 extra small (less than 6\\" long)", "gramWeight": 81 },
-    { "description": "1 small (6\\" to 6-7/8\\" long)", "gramWeight": 101 },
-    { "description": "1 medium (7\\" to 7-7/8\\" long)", "gramWeight": 118 },
-    { "description": "1 large (8\\" to 8-7/8\\" long)", "gramWeight": 136 },
-    { "description": "1 extra large (9\\" or longer)", "gramWeight": 152 },
-    { "description": "1 cup, sliced", "gramWeight": 150 },
-    { "description": "1 cup, mashed", "gramWeight": 225 }
+    { "description": "1 extra pequena (menos de 15 cm)", "gramWeight": 81 },
+    { "description": "1 pequena (15 a 17 cm)", "gramWeight": 101 },
+    { "description": "1 média (18 a 20 cm)", "gramWeight": 118 },
+    { "description": "1 grande (20 a 22 cm)", "gramWeight": 136 },
+    { "description": "1 extra grande (mais de 23 cm)", "gramWeight": 152 },
+    { "description": "1 chávena, fatiada", "gramWeight": 150 },
+    { "description": "1 chávena, amassada", "gramWeight": 225 }
   ]
 }
 
@@ -61,11 +65,11 @@ Food Item: "Apple"
 Your Output:
 {
   "portions": [
-    { "description": "1 small (2-3/4\\" dia)", "gramWeight": 149 },
-    { "description": "1 medium (3\\" dia)", "gramWeight": 182 },
-    { "description": "1 large (3-1/4\\" dia)", "gramWeight": 223 },
-    { "description": "1 cup, quartered or chopped", "gramWeight": 125 },
-    { "description": "1 cup, sliced", "gramWeight": 110 }
+    { "description": "1 pequena (aprox. 7 cm diâmetro)", "gramWeight": 149 },
+    { "description": "1 média (aprox. 7.5 cm diâmetro)", "gramWeight": 182 },
+    { "description": "1 grande (aprox. 8 cm diâmetro)", "gramWeight": 223 },
+    { "description": "1 chávena, em quartos ou picada", "gramWeight": 125 },
+    { "description": "1 chávena, fatiada", "gramWeight": 110 }
   ]
 }
 
