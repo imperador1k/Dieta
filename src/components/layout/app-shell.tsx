@@ -38,31 +38,33 @@ function Header() {
       >
         <Link href="/" className="flex items-center space-x-2">
           <Icons.Logo className="h-8 w-8 text-primary transition-transform duration-300 hover:scale-110" />
-          <span className="hidden font-bold text-xl tracking-tight text-foreground sm:inline-block">DietaS</span>
         </Link>
-        <nav className="absolute left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 md:block">
-          <ul className="flex items-center gap-2">
-            {navItems.map((item) => {
-              const isActive = pathname === item.href;
-              return (
-                <li key={item.href}>
-                  <Link href={item.href}>
-                    <Button
-                      variant="ghost"
-                      className={cn(
-                        "flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium text-muted-foreground transition-all duration-300 hover:text-foreground",
-                        isActive && "bg-primary/10 text-primary shadow-inner shadow-primary/5",
-                      )}
-                    >
-                      <item.icon className="h-4 w-4" />
-                      <span>{item.label}</span>
-                    </Button>
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
-        </nav>
+        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+             <span className="font-bold text-xl tracking-tight text-foreground md:hidden">DietaS</span>
+            <nav className="hidden md:block">
+                <ul className="flex items-center gap-2">
+                    {navItems.map((item) => {
+                    const isActive = pathname === item.href;
+                    return (
+                        <li key={item.href}>
+                        <Link href={item.href}>
+                            <Button
+                            variant="ghost"
+                            className={cn(
+                                "flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium text-muted-foreground transition-all duration-300 hover:text-foreground",
+                                isActive && "bg-primary/10 text-primary shadow-inner shadow-primary/5",
+                            )}
+                            >
+                            <item.icon className="h-4 w-4" />
+                            <span>{item.label}</span>
+                            </Button>
+                        </Link>
+                        </li>
+                    );
+                    })}
+                </ul>
+            </nav>
+        </div>
         <Avatar className='h-10 w-10 border-2 border-transparent transition-all duration-300 hover:border-primary'>
           <AvatarImage src="https://github.com/shadcn.png" alt="@shadcn" />
           <AvatarFallback>
