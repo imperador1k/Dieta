@@ -78,12 +78,6 @@ export interface UserProfile {
     avatarUrl?: string;
     age: number;
     height: number; // in cm
-    weight: number; // in kg
     gender: 'male' | 'female';
-    measurements: {
-        neck: number;
-        waist: number;
-        hips?: number;
-    }
 }
     

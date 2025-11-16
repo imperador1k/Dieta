@@ -2,23 +2,14 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
-import { TrendingUp, BarChart3, Target, Weight, Percent } from "lucide-react";
+import { TrendingUp, BarChart3, Weight, Percent } from "lucide-react";
 import { Area, AreaChart, Bar, BarChart, CartesianGrid, XAxis, YAxis, Cell } from "recharts";
 import { format } from 'date-fns';
 import { pt } from 'date-fns/locale';
+import { BodyMeasurement } from "@/lib/types";
+import { useMemo } from "react";
 
-// Mock Data
-const bodyTrendsData = [
-  { date: "2024-01-15", weight: 80, bodyFat: 20 },
-  { date: "2024-02-01", weight: 79.5, bodyFat: 19.8 },
-  { date: "2024-02-15", weight: 78.5, bodyFat: 19.2 },
-  { date: "2024-03-01", weight: 78, bodyFat: 18.9 },
-  { date: "2024-03-15", weight: 77, bodyFat: 18.5 },
-  { date: "2024-04-01", weight: 76.8, bodyFat: 18.2 },
-  { date: "2024-04-15", weight: 76, bodyFat: 17.8 },
-  { date: "2024-05-01", weight: 75.5, bodyFat: 17.5 },
-];
-
+// Mock Data for adherence, in a real app this would be fetched
 const adherenceData = [
   { date: "2024-05-01", calories: 2250, target: 2200 },
   { date: "2024-05-02", calories: 2180, target: 2200 },
@@ -56,7 +47,36 @@ const getBarColor = (value: number, target: number) => {
 }
 
 
-export default function ProgressCharts() {
+export default function ProgressCharts({ measurements }: { measurements: BodyMeasurement[] }) {
+    
+    // Calculate body fat for each measurement - this should be done in a separate utility in a real app
+    const bodyTrendsData = useMemo(() => measurements.map(m => {
+        // A real implementation would get gender and height from user profile
+        const heightInMeters = 180 / 100;
+        let bodyFat = 0;
+        if (m.neck && m.waist && heightInMeters) {
+            // Simplified US Navy formula for demonstration
+             bodyFat = 495 / (1.0324 - 0.19077 * Math.log10(m.waist - m.neck) + 0.15456 * Math.log10(heightInMeters * 100)) - 450;
+        }
+
+        return {
+            date: m.date,
+            weight: m.weight,
+            bodyFat: bodyFat > 0 ? bodyFat : undefined,
+        }
+    }), [measurements]);
+
+
+    if (measurements.length < 2) {
+        return (
+            <div className="flex flex-col items-center justify-center text-center py-20 border-2 border-dashed border-muted-foreground/20 rounded-lg">
+                <BarChart3 className="mx-auto h-12 w-12 text-muted-foreground/50" />
+                <h3 className="mt-4 text-lg font-semibold">Dados Insuficientes</h3>
+                <p className="mt-2 text-sm text-muted-foreground">Adicione pelo menos duas medições para ver os seus gráficos de progresso.</p>
+            </div>
+        )
+    }
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
       <Card className="glass-card">
@@ -79,8 +99,8 @@ export default function ProgressCharts() {
               </defs>
               <CartesianGrid vertical={false} strokeDasharray="3 3" className="stroke-border/50" />
               <XAxis dataKey="date" tickFormatter={formatDate} tickLine={false} axisLine={false} tickMargin={10} />
-              <YAxis yAxisId="weight" orientation="left" stroke="hsl(var(--chart-1))" tickLine={false} axisLine={false} />
-              <YAxis yAxisId="bodyFat" orientation="right" stroke="hsl(var(--chart-2))" tickLine={false} axisLine={false} />
+              <YAxis yAxisId="weight" orientation="left" stroke="hsl(var(--chart-1))" tickLine={false} axisLine={false} domain={['dataMin - 2', 'dataMax + 2']}/>
+              <YAxis yAxisId="bodyFat" orientation="right" stroke="hsl(var(--chart-2))" tickLine={false} axisLine={false} domain={['dataMin - 2', 'dataMax + 2']}/>
               <ChartTooltip cursor={{ stroke: "hsl(var(--border))" }} content={<ChartTooltipContent indicator="dot" />} />
               <Area dataKey="weight" type="natural" fill="url(#fillWeight)" stroke="var(--color-weight)" strokeWidth={2.5} yAxisId="weight" name="Peso (kg)" dot={false} />
               <Area dataKey="bodyFat" type="natural" fill="url(#fillBodyFat)" stroke="var(--color-bodyFat)" strokeWidth={2} yAxisId="bodyFat" name="% Gordura" dot={false} />
