@@ -1,16 +1,14 @@
 
 'use client';
 
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { MoreVertical, PlusCircle, Utensils, Grape, Flame, StickyNote } from "lucide-react";
+import { MoreVertical, PlusCircle, Utensils, Grape, Flame, Fish, Wheat, Droplet } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { motion, AnimatePresence } from "framer-motion";
-import { Textarea } from "../ui/textarea";
-import { Badge } from "../ui/badge";
 
 const variations = [
     { id: "descanso", label: "Dia de Descanso" },
@@ -23,54 +21,19 @@ type Meal = {
     name: string;
     items: any[]; 
     totalCalories: number;
-    note?: string;
+    protein: number;
+    carbs: number;
+    fat: number;
 };
 
 const initialMeals: Meal[] = [];
 
-const MealNoteEditor = ({ note, onSave }: { note?: string; onSave: (newNote: string) => void; }) => {
-    const [isEditing, setIsEditing] = useState(false);
-    const [currentNote, setCurrentNote] = useState(note || "");
-
-    const handleSave = () => {
-        onSave(currentNote);
-        setIsEditing(false);
-    }
-
-    if (isEditing) {
-        return (
-            <div className="space-y-2 pt-2">
-                <Textarea 
-                    value={currentNote}
-                    onChange={(e) => setCurrentNote(e.target.value)}
-                    placeholder="Adicione uma nota a este calendário..."
-                    className="bg-background/50 text-sm"
-                    rows={3}
-                />
-                <div className="flex justify-end gap-2">
-                    <Button variant="ghost" size="sm" onClick={() => setIsEditing(false)}>Cancelar</Button>
-                    <Button size="sm" onClick={handleSave}>Guardar Nota</Button>
-                </div>
-            </div>
-        );
-    }
-
-    return (
-        <div className="flex items-start gap-3 text-sm text-muted-foreground pt-2">
-            <StickyNote className="w-4 h-4 mt-1 shrink-0" />
-            <div className="flex-1">
-                {note ? (
-                    <p className="whitespace-pre-wrap italic">"{note}"</p>
-                ) : (
-                    <p>Sem notas para este calendário.</p>
-                )}
-            </div>
-            <Button variant="link" size="sm" className="p-0 h-auto" onClick={() => setIsEditing(true)}>
-                {note ? 'Editar' : 'Adicionar Nota'}
-            </Button>
-        </div>
-    );
-};
+const MacroBadge = ({ Icon, value, unit, className }: { Icon: React.ElementType, value: number, unit: string, className?: string }) => (
+    <div className={cn("flex items-center gap-1 text-xs", className)}>
+        <Icon className="w-3 h-3" />
+        <span>{value}{unit}</span>
+    </div>
+)
 
 
 export default function MealCategoriesWidget() {
@@ -82,12 +45,11 @@ export default function MealCategoriesWidget() {
             name: `Refeição ${meals.length + 1}`,
             items: [],
             totalCalories: 0,
+            protein: 0,
+            carbs: 0,
+            fat: 0
         };
         setMeals([...meals, newMeal]);
-    };
-
-    const handleSaveNote = (mealId: string, newNote: string) => {
-        setMeals(meals.map(m => m.id === mealId ? { ...m, note: newNote } : m));
     };
 
     return (
@@ -150,20 +112,19 @@ export default function MealCategoriesWidget() {
                                     <AccordionItem value={meal.id} className="border-b-0">
                                         <Card className="bg-muted/30">
                                             <AccordionTrigger className="p-4 text-lg font-semibold hover:no-underline">
-                                                <div className="flex items-center gap-4">
+                                                <div className="flex items-center gap-4 flex-1">
                                                     <Grape className="w-6 h-6 text-primary" />
-                                                    <span>{meal.name}</span>
-                                                    {meal.note && <Badge variant="outline" className="flex items-center gap-1.5 py-0.5 px-2 border-primary/30 text-primary"><StickyNote className="w-3 h-3"/>Nota</Badge>}
+                                                    <span className="truncate">{meal.name}</span>
                                                 </div>
-                                                <div className="flex items-center gap-2 text-sm text-muted-foreground pr-2">
-                                                    <Flame className="w-4 h-4" />
-                                                    <span>{meal.totalCalories} kcal</span>
+                                                <div className="flex items-center gap-3 text-sm text-muted-foreground pr-2">
+                                                    <MacroBadge Icon={Flame} value={meal.totalCalories} unit="kcal" className="text-foreground font-semibold" />
+                                                    <MacroBadge Icon={Fish} value={meal.protein} unit="g" className="text-chart-1" />
+                                                    <MacroBadge Icon={Wheat} value={meal.carbs} unit="g" className="text-chart-2" />
+                                                    <MacroBadge Icon={Droplet} value={meal.fat} unit="g" className="text-chart-3" />
                                                 </div>
                                             </AccordionTrigger>
                                             <AccordionContent className="px-4 pb-4">
                                                 <div className="border-t border-muted-foreground/20 pt-4 space-y-4">
-                                                    <MealNoteEditor note={meal.note} onSave={(newNote) => handleSaveNote(meal.id, newNote)} />
-                                                    
                                                     {meal.items.length === 0 ? (
                                                         <div className="text-center text-sm text-muted-foreground py-4 border-2 border-dashed border-muted-foreground/20 rounded-lg">
                                                             <p>Este calendário está vazio.</p>
