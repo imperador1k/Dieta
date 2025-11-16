@@ -7,6 +7,12 @@ export interface FoodSearchResult {
   fdcId: number;
   description: string;
   brandOwner?: string;
+  nutrients: {
+    calories: number;
+    protein: number;
+    fat: number;
+    carbohydrates: number;
+  };
 }
 
 export interface FoodDetails {
@@ -19,6 +25,13 @@ export interface FoodDetails {
     carbohydrates: number;
   };
 }
+
+const getNutrientValue = (foodNutrients: any[], nutrientId: number) => {
+    const nutrient = foodNutrients.find(
+      (n: any) => n.nutrientId === nutrientId
+    );
+    return nutrient ? nutrient.value : 0;
+};
 
 export async function searchFoodsUsda(query: string): Promise<FoodSearchResult[]> {
   if (!USDA_API_KEY) {
@@ -37,11 +50,20 @@ export async function searchFoodsUsda(query: string): Promise<FoodSearchResult[]
 
   const data = await response.json();
 
-  return data.foods.map((food: any) => ({
-    fdcId: food.fdcId,
-    description: food.description,
-    brandOwner: food.brandOwner,
-  }));
+  return data.foods.map((food: any) => {
+    const nutrients = food.foodNutrients || [];
+    return {
+        fdcId: food.fdcId,
+        description: food.description,
+        brandOwner: food.brandOwner,
+        nutrients: {
+            calories: getNutrientValue(nutrients, 1008),
+            protein: getNutrientValue(nutrients, 1003),
+            fat: getNutrientValue(nutrients, 1004),
+            carbohydrates: getNutrientValue(nutrients, 1005),
+        }
+    }
+  });
 }
 
 export async function getFoodDetailsUsda(fdcId: number): Promise<FoodDetails | null> {
@@ -61,23 +83,21 @@ export async function getFoodDetailsUsda(fdcId: number): Promise<FoodDetails | n
 
   const data = await response.json();
   
-  const getNutrientValue = (nutrientId: number) => {
+  const getNutrient = (nutrientId: number) => {
     const nutrient = data.foodNutrients.find(
       (n: any) => n.nutrient.id === nutrientId
     );
-    // The amount is per 100g, so we return that.
     return nutrient ? nutrient.amount : 0;
   };
 
   return {
     fdcId: data.fdcId,
     description: data.description,
-    // Nutrients are based on 100g serving
     nutrients: {
-      calories: getNutrientValue(1008), // Energy in Kcal
-      protein: getNutrientValue(1003), // Protein
-      fat: getNutrientValue(1004), // Total lipid (fat)
-      carbohydrates: getNutrientValue(1005), // Carbohydrate, by difference
+      calories: getNutrient(1008),
+      protein: getNutrient(1003),
+      fat: getNutrient(1004),
+      carbohydrates: getNutrient(1005),
     },
   };
 }

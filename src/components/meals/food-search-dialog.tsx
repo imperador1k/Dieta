@@ -8,10 +8,11 @@ import { Button } from '@/components/ui/button';
 import { getFoodDetails, searchFood } from '@/app/log/actions';
 import type { FoodSearchResult } from '@/services/usda';
 import type { FoodItemData } from '@/lib/types';
-import { Loader2, Plus, PlusCircle, Scale, Utensils } from 'lucide-react';
+import { Loader2, Plus, PlusCircle, Scale, Utensils, Flame, Fish, Wheat, Droplet } from 'lucide-react';
 import { ScrollArea } from '../ui/scroll-area';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useDebounce } from '@/hooks/use-debounce';
+import { Badge } from '../ui/badge';
 
 
 const SearchResultItem = ({
@@ -30,16 +31,34 @@ const SearchResultItem = ({
     >
         <button
             onClick={() => onSelect(result)}
-            className="w-full text-left p-3 rounded-md hover:bg-muted transition-colors flex items-center gap-4"
+            className="w-full text-left p-3 rounded-lg hover:bg-muted transition-colors flex flex-col gap-2 border bg-background/50"
         >
-            <div className="p-2 bg-muted/50 rounded-md">
-                <Utensils className="w-5 h-5 text-primary"/>
+            <div className="flex items-center justify-between">
+                <div className='flex-1'>
+                    <p className="font-semibold text-sm capitalize">{result.description.toLowerCase()}</p>
+                    {result.brandOwner && <p className="text-xs text-muted-foreground">{result.brandOwner}</p>}
+                </div>
+                <PlusCircle className="w-5 h-5 text-muted-foreground ml-4" />
             </div>
-            <div className="flex-1">
-                <p className="font-semibold text-sm capitalize">{result.description.toLowerCase()}</p>
-                {result.brandOwner && <p className="text-xs text-muted-foreground">{result.brandOwner}</p>}
+            <div className="flex items-center justify-start gap-4 text-xs text-muted-foreground border-t border-dashed pt-2 mt-2">
+                <div className="flex items-center gap-1.5 text-primary">
+                    <Flame className="w-3.5 h-3.5" />
+                    <span className='font-semibold'>{result.nutrients.calories.toFixed(0)}kcal</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                    <Fish className="w-3.5 h-3.5 text-chart-1" />
+                    <span>P: {result.nutrients.protein.toFixed(1)}g</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                    <Wheat className="w-3.5 h-3.5 text-chart-2" />
+                    <span>H: {result.nutrients.carbohydrates.toFixed(1)}g</span>
+                </div>
+                 <div className="flex items-center gap-1.5">
+                    <Droplet className="w-3.5 h-3.5 text-chart-3" />
+                    <span>G: {result.nutrients.fat.toFixed(1)}g</span>
+                </div>
             </div>
-            <PlusCircle className="w-5 h-5 text-muted-foreground" />
+            <p className='text-xs text-muted-foreground/50 text-right w-full'>Valores por 100g</p>
         </button>
     </motion.div>
 );
@@ -55,38 +74,31 @@ const AddFoodDetails = ({
 }) => {
     const [servingSize, setServingSize] = useState(100);
     const [isAdding, setIsAdding] = useState(false);
-    const [details, setDetails] = useState<Awaited<ReturnType<typeof getFoodDetails>>>(null);
-
-    useEffect(() => {
-        getFoodDetails(food.fdcId).then(setDetails);
-    }, [food.fdcId]);
+    
+    const servingMultiplier = servingSize / 100;
+    const { nutrients } = food;
 
     const handleAdd = () => {
-        if (!details) return;
         setIsAdding(true);
         const foodToAdd: FoodItemData = {
             id: `${food.fdcId}-${Date.now()}`,
             fdcId: food.fdcId,
             description: food.description,
             servingSize: servingSize,
-            nutrients: details.nutrients,
+            nutrients: nutrients,
         };
         onAdd(foodToAdd);
     };
 
-    if (!details) {
-        return (
-            <div className="flex items-center justify-center h-48">
-                <Loader2 className="w-8 h-8 animate-spin text-primary" />
-            </div>
-        );
-    }
-    
-    const servingMultiplier = servingSize / 100;
-    const { nutrients } = details;
-
     return (
-        <div className="p-1 space-y-4">
+        <motion.div 
+            className="p-1 space-y-4"
+            key="details"
+            initial={{ opacity: 0, x: 50 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -50 }}
+            transition={{ duration: 0.2 }}
+        >
              <div>
                 <h3 className="font-semibold capitalize text-lg">{food.description.toLowerCase()}</h3>
                 <p className="text-sm text-muted-foreground">Ajuste a porção e adicione à sua refeição.</p>
@@ -97,7 +109,7 @@ const AddFoodDetails = ({
                     type="number"
                     value={servingSize}
                     onChange={e => setServingSize(Number(e.target.value))}
-                    className="w-24"
+                    className="w-24 bg-background/80"
                 />
                 <span className="text-muted-foreground">gramas</span>
             </div>
@@ -136,7 +148,7 @@ const AddFoodDetails = ({
                     Adicionar à Refeição
                 </Button>
             </DialogFooter>
-        </div>
+        </motion.div>
     )
 }
 
@@ -192,7 +204,7 @@ export function FoodSearchDialog({
 
     return (
         <Dialog open={open} onOpenChange={handleOpenChange}>
-            <DialogContent className="max-w-md">
+            <DialogContent className="sm:max-w-lg">
                 <DialogHeader>
                     <DialogTitle>Adicionar Alimento</DialogTitle>
                      <DialogDescription>
@@ -202,46 +214,40 @@ export function FoodSearchDialog({
 
                 <AnimatePresence mode="wait">
                     {selectedFood ? (
-                        <motion.div
+                        <AddFoodDetails
                             key="details"
-                            initial={{ opacity: 0, x: 50 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            exit={{ opacity: 0, x: -50 }}
-                            transition={{ duration: 0.2 }}
-                        >
-                            <AddFoodDetails
-                                food={selectedFood}
-                                onAdd={handleAddFood}
-                                onBack={() => setSelectedFood(null)}
-                            />
-                        </motion.div>
+                            food={selectedFood}
+                            onAdd={handleAddFood}
+                            onBack={() => setSelectedFood(null)}
+                        />
                     ) : (
                         <motion.div
                             key="search"
-                            initial={{ opacity: 0, x: 0 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            exit={{ opacity: 0, x: 50 }}
-                             transition={{ duration: 0.2 }}
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            transition={{ duration: 0.2 }}
                             className="space-y-4"
                         >
                             <Input
-                                placeholder="Ex: Frango grelhado"
+                                placeholder="Ex: Frango grelhado, whey..."
                                 value={query}
                                 onChange={e => setQuery(e.target.value)}
+                                className='bg-background/80'
                             />
-                            <ScrollArea className="h-64">
+                            <ScrollArea className="h-72">
                                 <div className="pr-4">
                                     {isPending && (
-                                        <div className="flex justify-center items-center h-full">
-                                            <Loader2 className="w-6 h-6 animate-spin" />
+                                        <div className="flex justify-center items-center h-full p-8">
+                                            <Loader2 className="w-6 h-6 animate-spin text-primary" />
                                         </div>
                                     )}
                                     {!isPending && results.length === 0 && debouncedQuery.length > 2 && (
-                                        <p className="text-center text-sm text-muted-foreground p-4">
-                                            Nenhum resultado encontrado.
+                                        <p className="text-center text-sm text-muted-foreground p-8">
+                                            Nenhum resultado encontrado para "{debouncedQuery}".
                                         </p>
                                     )}
-                                    <div className="space-y-1">
+                                    <div className="space-y-2">
                                         <AnimatePresence>
                                             {results.map(result => (
                                                 <SearchResultItem
