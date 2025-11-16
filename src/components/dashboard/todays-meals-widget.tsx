@@ -23,7 +23,7 @@ export default function TodaysMealsWidget() {
                     </CardTitle>
                     <CardDescription>Registe e acompanhe as suas refeições.</CardDescription>
                 </div>
-                <Link href="/log" passHref legacyBehavior>
+                <Link href="/log">
                     <Button variant="ghost" size="icon" className="text-primary hover:bg-primary/10 hover:text-primary -mt-1 -mr-2">
                         <Plus className="h-5 w-5" />
                     </Button>
