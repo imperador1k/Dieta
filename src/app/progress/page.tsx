@@ -1,25 +1,33 @@
+'use client';
+
 import { AppShell } from "@/components/layout/app-shell";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { BarChart2 } from "lucide-react";
+import { EvolutionGallery } from "@/components/progress/evolution-gallery";
+import ProgressCharts from "@/components/progress/progress-charts";
+import { Button } from "@/components/ui/button";
+import { PlusCircle } from "lucide-react";
 
 export default function ProgressPage() {
     return (
         <AppShell>
-            <div className="flex flex-col items-center justify-center h-full text-center">
-                <Card className="glass-card max-w-md">
-                    <CardHeader>
-                        <CardTitle className="font-headline flex items-center justify-center gap-2">
-                           <BarChart2 />
-                            Galeria da Evolução
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <p className="text-muted-foreground">
-                            Esta secção está em desenvolvimento. Em breve, poderá visualizar gráficos detalhados do seu progresso
-                            e carregar fotos para a sua galeria de evolução.
+            <div className="space-y-8">
+                <header className="flex flex-wrap items-center justify-between gap-4">
+                    <div>
+                        <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-foreground">Sua Evolução</h1>
+                        <p className="mt-2 text-muted-foreground max-w-2xl">
+                            Visualize o seu progresso com gráficos detalhados e uma galeria de fotos da sua evolução.
                         </p>
-                    </CardContent>
-                </Card>
+                    </div>
+                    <div className="flex gap-2">
+                        <Button>
+                            <PlusCircle className="mr-2" />
+                            Adicionar Medição
+                        </Button>
+                    </div>
+                </header>
+                
+                <EvolutionGallery />
+
+                <ProgressCharts />
             </div>
         </AppShell>
     );

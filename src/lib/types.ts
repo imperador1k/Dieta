@@ -1,6 +1,3 @@
-
-
-
 import type { FoodDetails } from "@/services/usda";
 
 export type FoodItemData = {
@@ -53,10 +50,22 @@ export interface Plan {
 
 export interface Dish {
     id: string;
-    name: string;
+    name:string;
     description: string;
     ingredients: FoodItemData[];
     instructions: string;
 }
 
+export interface EvolutionPhoto {
+    id: string;
+    date: string; // ISO 8601 date string
+    imageUrl: string;
+    imageHint?: string;
+}
+
+export interface BodyMeasurement {
+    date: string; // ISO 8601 date string
+    weight?: number; // in kg
+    bodyFat?: number; // in percentage
+}
     
