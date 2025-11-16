@@ -15,8 +15,8 @@ import type { FoodItemData, Meal, MealItem, Dish } from "@/lib/types";
 import FoodItem from "./food-item";
 
 const MacroBadge = ({ Icon, value, unit, className }: { Icon: React.ElementType, value: number, unit: string, className?: string }) => (
-    <div className={cn("flex items-center gap-1 text-xs", className)}>
-        <Icon className="w-3 h-3" />
+    <div className={cn("flex items-center gap-1.5 text-xs", className)}>
+        <Icon className="w-3.5 h-3.5" />
         <span>{Math.round(value)}{unit}</span>
     </div>
 );
@@ -239,7 +239,7 @@ export default function MealCategoriesWidget({ meals, onMealsChange, savedDishes
         const meal = meals.find(m => m.id === mealId);
         if (!meal) return;
 
-        const allCurrentlyEaten = meal.items.every(item => item.eaten);
+        const allCurrentlyEaten = meal.items.length > 0 && meal.items.every(item => item.eaten);
         const newEatenState = !allCurrentlyEaten;
 
         const updatedMeals = meals.map(m => {
@@ -319,7 +319,7 @@ export default function MealCategoriesWidget({ meals, onMealsChange, savedDishes
                                     >
                                         <AccordionItem value={meal.id} className="border-b-0">
                                             <Card className="bg-muted/30">
-                                                <div className="flex items-center p-4">
+                                                <div className="flex items-center p-3 sm:p-4">
                                                     <button onClick={() => toggleMealEaten(meal.id)} className="p-2 rounded-full hover:bg-background/50 transition-colors">
                                                         <AnimatePresence mode="wait">
                                                             <motion.div
@@ -334,15 +334,17 @@ export default function MealCategoriesWidget({ meals, onMealsChange, savedDishes
                                                         </AnimatePresence>
                                                     </button>
                                                     <AccordionTrigger className="p-0 pl-2 text-lg font-semibold hover:no-underline flex-1">
-                                                        <div className="flex items-center gap-4 flex-1">
-                                                            <Grape className="w-6 h-6 text-primary" />
-                                                            <span className="truncate">{meal.name}</span>
-                                                        </div>
-                                                        <div className="flex items-center gap-3 text-sm text-muted-foreground pr-2">
-                                                            <MacroBadge Icon={Flame} value={meal.totalCalories} unit="kcal" className="text-foreground font-semibold" />
-                                                            <MacroBadge Icon={Fish} value={meal.protein} unit="g" className="text-chart-1" />
-                                                            <MacroBadge Icon={Wheat} value={meal.carbs} unit="g" className="text-chart-2" />
-                                                            <MacroBadge Icon={Droplet} value={meal.fat} unit="g" className="text-chart-3" />
+                                                        <div className="flex flex-col sm:flex-row sm:items-center sm:gap-4 flex-1 w-full">
+                                                            <div className="flex items-center gap-3">
+                                                                <Grape className="w-6 h-6 text-primary" />
+                                                                <span className="truncate">{meal.name}</span>
+                                                            </div>
+                                                            <div className="flex items-center gap-4 text-sm text-muted-foreground sm:ml-auto pl-9 sm:pl-0 mt-1 sm:mt-0">
+                                                                <MacroBadge Icon={Flame} value={meal.totalCalories} unit="kcal" className="text-foreground font-semibold" />
+                                                                <MacroBadge Icon={Fish} value={meal.protein} unit="g" className="text-chart-1" />
+                                                                <MacroBadge Icon={Wheat} value={meal.carbs} unit="g" className="text-chart-2" />
+                                                                <MacroBadge Icon={Droplet} value={meal.fat} unit="g" className="text-chart-3" />
+                                                            </div>
                                                         </div>
                                                     </AccordionTrigger>
                                                 </div>
