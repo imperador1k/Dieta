@@ -14,7 +14,7 @@ const bodyTrendsData = [
   { date: "2024-02-15", weight: 78.5, bodyFat: 19.2 },
   { date: "2024-03-01", weight: 78, bodyFat: 18.9 },
   { date: "2024-03-15", weight: 77, bodyFat: 18.5 },
-  { date- "2024-04-01", weight: 76.8, bodyFat: 18.2 },
+  { date: "2024-04-01", weight: 76.8, bodyFat: 18.2 },
   { date: "2024-04-15", weight: 76, bodyFat: 17.8 },
   { date: "2024-05-01", weight: 75.5, bodyFat: 17.5 },
 ];
