@@ -68,14 +68,16 @@ const AddOrEditFoodDetails = ({
     food,
     onConfirm,
     onBack,
-    isEditing
+    isEditing,
+    originalId
 }: {
-    food: FoodItemData | FoodDetails,
+    food: FoodDetails,
     onConfirm: (food: FoodItemData) => void,
     onBack: () => void,
-    isEditing: boolean
+    isEditing: boolean,
+    originalId?: string,
 }) => {
-    const [servingSize, setServingSize] = useState('servingSize' in food ? food.servingSize : 100);
+    const [servingSize, setServingSize] = useState('servingSize' in food ? (food as any).servingSize : 100);
     const [isSubmitting, setIsSubmitting] = useState(false);
     
     const servingMultiplier = servingSize / 100;
@@ -84,7 +86,7 @@ const AddOrEditFoodDetails = ({
     const handleConfirm = () => {
         setIsSubmitting(true);
         const foodToConfirm: FoodItemData = {
-            id: 'id' in food ? food.id : `${food.fdcId}-${Date.now()}`,
+            id: originalId || `${food.fdcId}-${Date.now()}`,
             fdcId: food.fdcId,
             description: food.description,
             servingSize: servingSize,
@@ -122,8 +124,8 @@ const AddOrEditFoodDetails = ({
                                 <SelectValue placeholder="Selecionar porção" />
                             </SelectTrigger>
                             <SelectContent>
-                                {portions.map(p => (
-                                    <SelectItem key={p.id} value={String(p.gramWeight)}>
+                                {portions.map((p, index) => (
+                                    <SelectItem key={`${p.id}-${index}`} value={String(p.gramWeight)}>
                                         {p.portionDescription} ({p.gramWeight}g)
                                     </SelectItem>
                                 ))}
@@ -195,12 +197,12 @@ export function FoodSearchDialog({
     open,
     onOpenChange,
     onFoodConfirm,
-    foodToEdit
+    foodToEdit,
 }: {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     onFoodConfirm: (food: FoodItemData) => void;
-    foodToEdit?: FoodItemData | null;
+    foodToEdit: FoodItemData | null;
 }) {
     const [query, setQuery] = useState('');
     const debouncedQuery = useDebounce(query, 300);
@@ -209,15 +211,23 @@ export function FoodSearchDialog({
     const [isLoadingDetails, startDetailsTransition] = useTransition();
 
     const [selectedFood, setSelectedFood] = useState<FoodDetails | null>(null);
-    const [editingFood, setEditingFood] = useState<FoodItemData | null>(null);
-
-    const isEditing = !!editingFood;
+    
+    // This state will hold the full details of the food being edited.
+    const [editingFoodDetails, setEditingFoodDetails] = useState<FoodDetails | null>(null);
+    const isEditing = !!foodToEdit;
 
     useEffect(() => {
         if (open && foodToEdit) {
-            setEditingFood(foodToEdit);
+            startDetailsTransition(async () => {
+                const details = await getFoodDetails(foodToEdit.fdcId);
+                if (details) {
+                    // We need to add the servingSize to the details object for the form
+                    const detailsWithServing = { ...details, servingSize: foodToEdit.servingSize };
+                    setEditingFoodDetails(detailsWithServing);
+                }
+            });
         } else {
-            setEditingFood(null);
+            setEditingFoodDetails(null);
         }
     }, [open, foodToEdit]);
 
@@ -257,7 +267,7 @@ export function FoodSearchDialog({
         setQuery('');
         setResults([]);
         setSelectedFood(null);
-        setEditingFood(null);
+        setEditingFoodDetails(null);
         onOpenChange(false);
     }
     
@@ -271,8 +281,8 @@ export function FoodSearchDialog({
 
     const isPending = isSearching || isLoadingDetails;
 
-    const currentView = editingFood ? 'details' : selectedFood ? 'details' : 'search';
-    const foodForDetails = editingFood || selectedFood;
+    const currentView = editingFoodDetails ? 'details' : selectedFood ? 'details' : 'search';
+    const foodForDetails = editingFoodDetails || selectedFood;
 
     return (
         <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -280,20 +290,26 @@ export function FoodSearchDialog({
                 <DialogHeader>
                     <DialogTitle>{isEditing ? 'Editar Alimento' : 'Adicionar Alimento'}</DialogTitle>
                      <DialogDescription>
-                        {currentView === 'details' ? 'Confirme a porção do alimento.' : 'Procure um alimento para adicionar à sua refeição.'}
+                        {currentView === 'details' ? 'Ajuste a porção do alimento.' : 'Procure um alimento para adicionar à sua refeição.'}
                     </DialogDescription>
                 </DialogHeader>
-
+                
                 <AnimatePresence mode="wait">
-                    {currentView === 'details' && foodForDetails ? (
+                   {isPending && currentView !== 'search' && (
+                        <div className="flex justify-center items-center h-72">
+                            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                        </div>
+                   )}
+                   {!isPending && currentView === 'details' && foodForDetails ? (
                         <AddOrEditFoodDetails
-                            key="details"
+                            key={isEditing ? foodToEdit?.id : 'add'}
                             food={foodForDetails}
                             onConfirm={handleConfirmFood}
                             onBack={() => setSelectedFood(null)}
                             isEditing={isEditing}
+                            originalId={foodToEdit?.id}
                         />
-                    ) : (
+                   ) : (
                         <motion.div
                             key="search"
                             initial={{ opacity: 0 }}
@@ -310,12 +326,12 @@ export function FoodSearchDialog({
                             />
                             <ScrollArea className="h-72">
                                 <div className="pr-4">
-                                    {isPending && (
+                                    {isSearching && (
                                         <div className="flex justify-center items-center h-full p-8">
                                             <Loader2 className="w-6 h-6 animate-spin text-primary" />
                                         </div>
                                     )}
-                                    {!isPending && results.length === 0 && debouncedQuery.length > 2 && (
+                                    {!isSearching && results.length === 0 && debouncedQuery.length > 2 && (
                                         <p className="text-center text-sm text-muted-foreground p-8">
                                             Nenhum resultado encontrado para "{debouncedQuery}".
                                         </p>
