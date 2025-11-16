@@ -15,6 +15,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { Button } from '../ui/button';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
+import { useState } from 'react';
 
 const navItems = [
   { href: '/', label: 'Dashboard', icon: LayoutDashboard },
@@ -22,7 +23,6 @@ const navItems = [
   { href: '/meals', label: 'Refeições', icon: UtensilsCrossed },
   { href: '/log', label: 'Registo', icon: PlusSquare },
   { href: '/progress', label: 'Progresso', icon: BarChart2 },
-  { href: '/gallery', label: 'Galeria', icon: GalleryVertical },
 ];
 
 function Header() {
@@ -78,6 +78,7 @@ function Header() {
 
 function MobileBottomNav() {
     const pathname = usePathname();
+    const [hoveredPath, setHoveredPath] = useState(pathname);
 
     return (
         <nav className="fixed bottom-4 left-0 z-50 w-full px-4 md:hidden">
@@ -85,25 +86,38 @@ function MobileBottomNav() {
                 initial={{ y: 100, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ type: 'spring', stiffness: 70, damping: 20, delay: 0.2 }}
-                className="mx-auto flex h-16 max-w-md items-center justify-around rounded-full border border-primary/10 bg-background/60 shadow-lg backdrop-blur-xl"
+                className="mx-auto flex h-16 max-w-md items-center justify-around rounded-full border border-primary/10 bg-background/60 p-1 shadow-lg backdrop-blur-xl"
             >
                 {navItems.map((item) => {
                     const isActive = pathname === item.href;
                     return (
-                        <Link href={item.href} key={item.href} className="flex-1">
-                            <div className="relative flex flex-col items-center justify-center gap-1 text-muted-foreground transition-colors hover:text-primary">
-                                <div className={cn(
-                                    "absolute -top-3 flex h-8 w-16 items-end justify-center rounded-b-full transition-all",
-                                    isActive && "bg-primary/10"
-                                )}>
-                                    {isActive && <div className="h-1 w-8 rounded-full bg-primary mb-1 chart-glow"/>}
-                                </div>
-                                <item.icon className={cn(
-                                    "h-6 w-6 transition-transform",
-                                    isActive ? "text-primary scale-110" : "scale-100"
-                                )} />
-                                <span className={cn("text-xs font-medium", isActive && "text-primary")}>{item.label}</span>
-                            </div>
+                        <Link 
+                            href={item.href} 
+                            key={item.href} 
+                            className={cn(
+                                "relative flex h-full flex-1 flex-col items-center justify-center gap-1 rounded-full text-sm font-medium transition-colors",
+                                !isActive && "hover:text-primary"
+                            )}
+                            onMouseOver={() => setHoveredPath(item.href)}
+                            onMouseLeave={() => setHoveredPath(pathname)}
+                        >
+                            <item.icon className={cn(
+                                "h-5 w-5 transition-transform",
+                                isActive ? "text-primary" : "text-muted-foreground"
+                            )} />
+                            <span className={cn(isActive ? "text-primary" : "text-muted-foreground", "text-[10px]")}>
+                                {item.label}
+                            </span>
+                            {item.href === hoveredPath && (
+                                <motion.div
+                                    className="absolute inset-0 rounded-full bg-primary/10"
+                                    layoutId="mobile-nav-hover"
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    exit={{ opacity: 0 }}
+                                    transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+                                />
+                            )}
                         </Link>
                     )
                 })}
@@ -114,15 +128,21 @@ function MobileBottomNav() {
 
 
 export function AppShell({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
+  const isGalleryPage = pathname === '/gallery';
+
   return (
     <div className="relative flex min-h-screen flex-col">
-      <Header />
-      <main className="flex-1 pt-24 pb-24 md:pb-8">
-        <div className="container mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+      {!isGalleryPage && <Header />}
+      <main className={cn(
+        "flex-1",
+        !isGalleryPage && "pt-24 pb-24 md:pb-8"
+      )}>
+        <div className={cn(!isGalleryPage && "container mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8")}>
             {children}
         </div>
       </main>
-      <MobileBottomNav />
+      {!isGalleryPage && <MobileBottomNav />}
     </div>
   );
 }
