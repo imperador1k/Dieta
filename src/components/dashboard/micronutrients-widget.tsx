@@ -2,6 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { motion } from 'framer-motion';
+import { Beaker } from 'lucide-react';
 
 const SaltIcon = (props: React.SVGProps<SVGSVGElement>) => (
     <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -54,7 +55,7 @@ const micronutrientsData: Micronutrient[] = [
 const ProgressBar = ({ value, color, delay }: { value: number; color: string; delay: number }) => {
     const safeValue = Math.max(0, Math.min(100, value));
     return (
-        <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted/30">
+        <div className="h-1 w-full overflow-hidden rounded-full bg-muted/30">
             <motion.div
                 className="h-full rounded-full"
                 style={{ background: color }}
@@ -70,8 +71,7 @@ export default function MicronutrientsWidget() {
     return (
         <Card className="glass-card">
             <CardHeader>
-                <CardTitle>Micronutrientes Chave</CardTitle>
-                <CardDescription>Resumo do consumo diário de vitaminas e minerais.</CardDescription>
+                <CardTitle className="flex items-center gap-2 text-base"><Beaker className="w-5 h-5 text-primary"/>Micronutrientes</CardTitle>
             </CardHeader>
             <CardContent className="grid gap-x-8 gap-y-6 sm:grid-cols-2">
                 {micronutrientsData.map((micro, index) => {
@@ -79,13 +79,13 @@ export default function MicronutrientsWidget() {
                     
                     return (
                         <div key={micro.name} className="flex items-center gap-4">
-                            <div className="bg-muted/30 p-3 rounded-lg">
-                                <micro.icon className="h-6 w-6" style={{ color: micro.color }} />
+                            <div className="bg-muted/30 p-2.5 rounded-lg">
+                                <micro.icon className="h-5 w-5" style={{ color: micro.color }} />
                             </div>
-                            <div className="flex-1 space-y-2">
+                            <div className="flex-1 space-y-1">
                                 <div className="flex justify-between items-baseline">
-                                    <p className="font-medium text-foreground">{micro.name}</p>
-                                    <p className="text-sm text-muted-foreground">
+                                    <p className="font-medium text-foreground text-sm">{micro.name}</p>
+                                    <p className="text-xs text-muted-foreground">
                                         <span className="font-semibold text-foreground">{micro.consumed}</span>
                                         /{micro.goal} {micro.unit}
                                     </p>

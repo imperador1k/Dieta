@@ -3,115 +3,79 @@
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import {
-  Home,
+  LayoutDashboard,
   FileText,
   PlusSquare,
   BarChart2,
   Settings,
   User,
+  GalleryVertical,
 } from 'lucide-react';
-import {
-  SidebarProvider,
-  Sidebar,
-  SidebarHeader,
-  SidebarContent,
-  SidebarMenu,
-  SidebarMenuItem,
-  SidebarMenuButton,
-  SidebarInset,
-  SidebarTrigger,
-  SidebarFooter,
-} from '@/components/ui/sidebar';
 import { Icons } from '@/components/icons';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
-import { Button } from '../ui/button';
+import { Button, buttonVariants } from '../ui/button';
 import { cn } from '@/lib/utils';
-import { useSidebar } from '@/components/ui/sidebar';
 
 const navItems = [
-  { href: '/', label: 'Dashboard', icon: Home },
+  { href: '/', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/log', label: 'Registo', icon: PlusSquare },
   { href: '/progress', label: 'Progresso', icon: BarChart2 },
   { href: '/plan', label: 'Plano', icon: FileText },
+  { href: '/gallery', label: 'Galeria', icon: GalleryVertical, disabled: true },
 ];
 
 function Header() {
   const pathname = usePathname();
-  const { state } = useSidebar();
-  const currentNavItem = navItems.find((item) => item.href === pathname);
 
   return (
-    <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background/80 px-4 backdrop-blur-xl sm:px-6">
-      <SidebarTrigger className="md:hidden" />
-      <div
-        className={cn(
-          'flex-1 transition-opacity duration-300',
-          state === 'expanded' && 'md:opacity-0'
-        )}
-      >
-        {currentNavItem && (
-          <h1 className="flex items-center gap-2 text-xl font-semibold">
-            <currentNavItem.icon className="h-5 w-5" />
-            {currentNavItem.label}
-          </h1>
-        )}
-      </div>
-      <div className="ml-auto">
-        <Avatar>
-          <AvatarImage src="https://github.com/shadcn.png" alt="@shadcn" />
-          <AvatarFallback>
-            <User />
-          </AvatarFallback>
-        </Avatar>
+    <header className="sticky top-0 z-40 w-full border-b bg-background/80 backdrop-blur-lg">
+      <div className="container flex h-16 items-center space-x-4 sm:justify-between sm:space-x-0">
+        <div className="flex gap-6 md:gap-10">
+          <Link href="/" className="flex items-center space-x-2">
+            <Icons.Logo className="h-6 w-6 text-primary" />
+            <span className="inline-block font-bold">DietaS</span>
+          </Link>
+          <nav className="hidden gap-6 md:flex">
+            {navItems.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={cn(
+                  "flex items-center text-sm font-medium text-muted-foreground transition-colors hover:text-foreground",
+                  pathname === item.href && "text-foreground",
+                  item.disabled && "cursor-not-allowed opacity-50"
+                )}
+              >
+                {item.label}
+              </Link>
+            ))}
+          </nav>
+        </div>
+
+        <div className="flex flex-1 items-center justify-end space-x-4">
+          <nav className="flex items-center space-x-2">
+            <Button variant="ghost" size="icon">
+              <Settings className="h-5 w-5" />
+            </Button>
+            <Avatar className='h-8 w-8'>
+              <AvatarImage src="https://github.com/shadcn.png" alt="@shadcn" />
+              <AvatarFallback>
+                <User className="h-5 w-5"/>
+              </AvatarFallback>
+            </Avatar>
+          </nav>
+        </div>
       </div>
     </header>
   );
 }
 
-export function AppShell({ children }: { children: React.ReactNode }) {
-  const pathname = usePathname();
 
+export function AppShell({ children }: { children: React.ReactNode }) {
   return (
-    <SidebarProvider>
-      <Sidebar collapsible="icon" className="border-r">
-        <SidebarHeader>
-          <div className="flex items-center gap-2 p-2">
-            <Icons.Logo className="w-8 h-8 text-primary" />
-            <span className="text-xl font-bold">DietaS</span>
-          </div>
-        </SidebarHeader>
-        <SidebarContent>
-          <SidebarMenu>
-            {navItems.map((item) => (
-              <SidebarMenuItem key={item.href}>
-                <Link href={item.href}>
-                  <SidebarMenuButton
-                    isActive={pathname === item.href}
-                    tooltip={{ children: item.label, side: 'right' }}
-                  >
-                    <item.icon />
-                    <span>{item.label}</span>
-                  </SidebarMenuButton>
-                </Link>
-              </SidebarMenuItem>
-            ))}
-          </SidebarMenu>
-        </SidebarContent>
-        <SidebarFooter>
-          <SidebarMenu>
-            <SidebarMenuItem>
-              <SidebarMenuButton tooltip={{ children: 'Definições', side: 'right' }}>
-                <Settings />
-                <span>Definições</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          </SidebarMenu>
-        </SidebarFooter>
-      </Sidebar>
-      <SidebarInset>
-        <Header />
-        <main className="flex-1 p-4 md:p-6">{children}</main>
-      </SidebarInset>
-    </SidebarProvider>
+    <div className="relative flex min-h-screen flex-col">
+      <Header />
+      <main className="flex-1 container py-6">{children}</main>
+    </div>
   );
 }

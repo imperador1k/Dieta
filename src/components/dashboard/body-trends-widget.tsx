@@ -7,7 +7,7 @@ import {
   ChartTooltipContent,
 } from "@/components/ui/chart";
 import { AreaChart, Area, CartesianGrid, XAxis, Tooltip } from "recharts";
-import { Weight, Percent } from 'lucide-react';
+import { Weight, Percent, TrendingUp } from 'lucide-react';
 
 const chartData = [
   { month: "Jan", weight: 80, fat: 20 },
@@ -21,12 +21,12 @@ const chartData = [
 const chartConfig = {
   weight: {
     label: "Peso (kg)",
-    color: "hsl(var(--primary))",
+    color: "hsl(var(--chart-1))",
     icon: Weight,
   },
   fat: {
     label: "% Gordura",
-    color: "hsl(var(--chart-3))",
+    color: "hsl(var(--chart-2))",
     icon: Percent,
   },
 };
@@ -35,8 +35,7 @@ export default function BodyTrendsWidget() {
   return (
     <Card className="glass-card">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">Tendências Corporais</CardTitle>
-        <CardDescription>Evolução do peso e % de gordura.</CardDescription>
+        <CardTitle className="flex items-center gap-2 text-base"><TrendingUp className="w-5 h-5 text-primary"/>Tendências Corporais</CardTitle>
       </CardHeader>
       <CardContent>
         <ChartContainer config={chartConfig} className="h-[200px] w-full">
@@ -70,8 +69,8 @@ export default function BodyTrendsWidget() {
                 indicator="dot"
                 formatter={(value, name) => (
                   <div className="flex items-center gap-2">
-                    <span className="font-semibold" style={{ color: chartConfig[name as keyof typeof chartConfig].color }}>
-                      {chartConfig[name as keyof typeof chartConfig].label}
+                    <span className="font-semibold capitalize" style={{ color: chartConfig[name as keyof typeof chartConfig].color }}>
+                      {name}
                     </span>
                     <span>{value}{name === 'weight' ? ' kg' : '%'}</span>
                   </div>
@@ -86,7 +85,6 @@ export default function BodyTrendsWidget() {
               stroke="var(--color-weight)"
               strokeWidth={2.5}
               stackId="a"
-              className="chart-glow"
             />
              <Area
               dataKey="fat"

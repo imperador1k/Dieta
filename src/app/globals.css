@@ -4,95 +4,95 @@
 
 @layer base {
   :root {
-    --background: 224 71% 4%; /* Deep Slate Blue */
-    --foreground: 210 40% 98%;
+    --background: 258 50% 5%; /* Very dark purple */
+    --foreground: 240 10% 95%; /* Light grey */
 
-    --card: 224 71% 9%;
-    --card-foreground: 210 40% 98%;
+    --card: 258 40% 8%;
+    --card-foreground: 240 10% 95%;
 
-    --popover: 224 71% 4%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 258 50% 5%;
+    --popover-foreground: 240 10% 95%;
 
-    --primary: 142 71% 45%; /* Vibrant Green */
-    --primary-foreground: 142 90% 96%;
+    --primary: 258 100% 80%; /* Lavender */
+    --primary-foreground: 258 50% 10%;
 
-    --secondary: 215 28% 17%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 258 40% 15%;
+    --secondary-foreground: 240 10% 95%;
 
-    --muted: 215 28% 17%;
-    --muted-foreground: 215 20% 65%;
+    --muted: 258 40% 15%;
+    --muted-foreground: 240 5% 65%;
 
-    --accent: 215 28% 17%;
-    --accent-foreground: 210 40% 98%;
+    --accent: 258 40% 15%;
+    --accent-foreground: 240 10% 95%;
 
     --destructive: 0 63% 31%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 215 28% 17%;
-    --input: 215 28% 17%;
-    --ring: 142 71% 45%;
+    --border: 258 40% 15%;
+    --input: 258 40% 15%;
+    --ring: 258 100% 80%;
 
     --radius: 0.75rem;
 
     /* Chart Colors */
-    --chart-1: 142 71% 45%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 175 70% 40%;
+    --chart-1: 180 80% 50%; /* Cyan for Protein */
+    --chart-2: 330 80% 60%; /* Magenta for Carbs */
+    --chart-3: 50 90% 60%; /* Yellow for Fat */
     --chart-4: 190 80% 40%;
     --chart-5: 205 90% 45%;
     
     /* Sidebar specific colors */
-    --sidebar-background: 224 71% 4%;
-    --sidebar-foreground: 210 40% 98%;
-    --sidebar-border: 215 28% 17%;
-    --sidebar-accent: 215 28% 17%;
-    --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-ring: 142 71% 45%;
+    --sidebar-background: 258 50% 5%;
+    --sidebar-foreground: 240 10% 95%;
+    --sidebar-border: 258 40% 15%;
+    --sidebar-accent: 258 40% 15%;
+    --sidebar-accent-foreground: 240 10% 95%;
+    --sidebar-ring: 258 100% 80%;
   }
 
   .dark {
-    --background: 224 71% 4%;
-    --foreground: 210 40% 98%;
+    --background: 258 50% 5%; /* Very dark purple */
+    --foreground: 240 10% 95%; /* Light grey */
 
-    --card: 224 71% 9%;
-    --card-foreground: 210 40% 98%;
+    --card: 258 40% 8%;
+    --card-foreground: 240 10% 95%;
 
-    --popover: 224 71% 4%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 258 50% 5%;
+    --popover-foreground: 240 10% 95%;
 
-    --primary: 142 71% 45%;
-    --primary-foreground: 142 90% 96%;
+    --primary: 258 100% 80%; /* Lavender */
+    --primary-foreground: 258 50% 10%;
 
-    --secondary: 215 28% 17%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 258 40% 15%;
+    --secondary-foreground: 240 10% 95%;
 
-    --muted: 215 28% 17%;
-    --muted-foreground: 215 20% 65%;
+    --muted: 258 40% 15%;
+    --muted-foreground: 240 5% 65%;
 
-    --accent: 215 28% 17%;
-    --accent-foreground: 210 40% 98%;
+    --accent: 258 40% 15%;
+    --accent-foreground: 240 10% 95%;
 
     --destructive: 0 63% 31%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 215 28% 17%;
-    --input: 215 28% 17%;
-    --ring: 142 71% 45%;
+    --border: 258_40%_15%;
+    --input: 258 40% 15%;
+    --ring: 258 100% 80%;
 
     /* Chart Colors */
-    --chart-1: 142 71% 45%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 175 70% 40%;
+    --chart-1: 180 80% 50%; /* Cyan for Protein */
+    --chart-2: 330 80% 60%; /* Magenta for Carbs */
+    --chart-3: 50 90% 60%; /* Yellow for Fat */
     --chart-4: 190 80% 40%;
     --chart-5: 205 90% 45%;
     
     /* Sidebar specific colors */
-    --sidebar-background: 224 71% 4%;
-    --sidebar-foreground: 210 40% 98%;
-    --sidebar-border: 215 28% 17%;
-    --sidebar-accent: 215 28% 17%;
-    --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-ring: 142 71% 45%;
+    --sidebar-background: 258 50% 5%;
+    --sidebar-foreground: 240 10% 95%;
+    --sidebar-border: 258 40% 15%;
+    --sidebar-accent: 258 40% 15%;
+    --sidebar-accent-foreground: 240 10% 95%;
+    --sidebar-ring: 258 100% 80%;
   }
 }
 

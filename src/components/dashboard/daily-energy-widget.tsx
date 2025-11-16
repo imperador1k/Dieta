@@ -5,11 +5,11 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Drumstick, Wheat, Droplet, Flame } from "lucide-react";
 import { motion } from 'framer-motion';
 
-const totalCalories = { consumed: 120 * 4 + 250 * 4 + 60 * 9, goal: 2500 };
+const totalCalories = { consumed: 1850, goal: 2500 };
 const macros = {
     protein: { consumed: 120, goal: 180, color: "hsl(var(--chart-1))", icon: Drumstick },
     carbs: { consumed: 250, goal: 300, color: "hsl(var(--chart-2))", icon: Wheat },
-    fat: { consumed: 60, goal: 70, color: "hsl(var(--chart-4))", icon: Droplet },
+    fat: { consumed: 60, goal: 70, color: "hsl(var(--chart-3))", icon: Droplet },
 };
 
 const CalorieCircularProgress = ({
@@ -21,8 +21,8 @@ const CalorieCircularProgress = ({
   goal: number;
   delay?: number;
 }) => {
-  const radius = 80;
-  const strokeWidth = 14;
+  const radius = 65;
+  const strokeWidth = 12;
   const circumference = 2 * Math.PI * radius;
   const progress = Math.min(consumed / goal, 1);
   const strokeDashoffset = circumference - progress * circumference;
@@ -35,7 +35,7 @@ const CalorieCircularProgress = ({
           cy="50%"
           r={radius}
           fill="transparent"
-          stroke="hsl(var(--muted) / 0.1)"
+          stroke="hsl(var(--muted) / 0.3)"
           strokeWidth={strokeWidth}
         />
         <motion.circle
@@ -53,22 +53,22 @@ const CalorieCircularProgress = ({
           transition={{ duration: 1.2, ease: "circOut", delay }}
         />
         <defs>
-            <linearGradient id="calorieGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <linearGradient id="calorieGradient" x1="0%" y1="0%" x2="0%" y2="100%">
                 <stop offset="0%" stopColor="hsl(var(--primary))" />
-                <stop offset="100%" stopColor="hsl(var(--chart-3))" />
+                <stop offset="100%" stopColor="hsl(258 90% 60%)" />
             </linearGradient>
         </defs>
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
           <motion.span 
-            className="text-5xl font-bold text-foreground tracking-tighter"
+            className="text-4xl font-bold text-foreground tracking-tighter"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: delay + 0.2 }}
           >
               {Math.round(consumed)}
           </motion.span>
-          <span className="text-sm text-muted-foreground">/ {goal} kcal</span>
+          <span className="text-xs text-muted-foreground mt-1">/ {goal} kcal</span>
         </div>
     </div>
   );
@@ -93,17 +93,19 @@ const MacroLinearProgress = ({
     const percentage = (consumed / goal) * 100;
     return (
         <motion.div 
-            className="flex flex-col items-center gap-2 w-full"
+            className="flex flex-col gap-2"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay }}
         >
-            <div className="flex items-center gap-2">
-                <Icon className="w-5 h-5" style={{ color }} />
-                <p className="font-semibold text-md text-foreground">{label}</p>
+            <div className="flex justify-between items-center">
+                <div className='flex items-center gap-2'>
+                    <Icon className="w-4 h-4" style={{ color }} />
+                    <p className="font-semibold text-sm text-foreground">{label}</p>
+                </div>
+                <p className="text-sm text-muted-foreground">{consumed}g / {goal}g</p>
             </div>
-            <p className="text-sm text-muted-foreground">{consumed} / {goal}g</p>
-            <div className="h-2 w-full overflow-hidden rounded-full bg-muted/20 mt-1">
+            <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted/30 mt-1">
                 <motion.div
                     className="h-full rounded-full"
                     style={{ background: color }}
@@ -119,17 +121,16 @@ const MacroLinearProgress = ({
 
 export default function DailyEnergyWidget() {
   return (
-    <Card className="glass-card flex flex-col h-full">
+    <Card className="glass-card flex flex-col h-full border border-primary/20 shadow-primary/10 shadow-lg">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2"><Flame className="w-5 h-5 text-primary"/>Energia Diária</CardTitle>
-        <CardDescription>O seu balanço de calorias e macronutrientes.</CardDescription>
+        <CardTitle className="flex items-center gap-2 text-base"><Flame className="w-5 h-5 text-primary"/>Energia Diária</CardTitle>
       </CardHeader>
-      <CardContent className="flex-1 flex flex-col items-center justify-center gap-10 md:gap-12 py-6">
+      <CardContent className="flex-1 flex flex-col items-center justify-center gap-6 py-6">
         <CalorieCircularProgress
             consumed={totalCalories.consumed}
             goal={totalCalories.goal}
         />
-        <div className="grid grid-cols-3 gap-6 md:gap-10 w-full max-w-lg">
+        <div className="grid grid-cols-1 gap-4 w-full px-4">
             <MacroLinearProgress 
                 label="Proteína"
                 consumed={macros.protein.consumed}
@@ -139,7 +140,7 @@ export default function DailyEnergyWidget() {
                 delay={0.2}
             />
             <MacroLinearProgress 
-                label="Carbs"
+                label="Carboidratos"
                 consumed={macros.carbs.consumed}
                 goal={macros.carbs.goal}
                 color={macros.carbs.color}
