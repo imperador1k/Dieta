@@ -95,7 +95,7 @@ export function AiLoggerForm() {
                               <TableCell className="text-right">{values.fat?.toFixed(1) ?? '-'}g</TableCell>
                               <TableCell className="text-right">
                                 <Button variant="ghost" size="icon"><Plus className="w-4 h-4" /></Button>
-                                <Button variant="ghost" size="icon" className="text-destructive"></Button>
+                                <Button variant="ghost" size="icon" className="text-destructive"><X className="w-4 h-4" /></Button>
                               </TableCell>
                           </TableRow>
                       ))}

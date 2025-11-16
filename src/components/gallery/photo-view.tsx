@@ -25,7 +25,7 @@ export default function PhotoView({ photo, onClose }: PhotoViewProps) {
               className="relative w-full h-full flex flex-col items-center justify-center"
             >
                 <Button variant="ghost" size="icon" className="absolute top-4 right-4 z-20 h-10 w-10 rounded-full bg-black/40 text-white hover:bg-black/60 hover:text-white" onClick={onClose}>
-                    
+                    <X className="h-5 w-5" />
                     <span className="sr-only">Fechar</span>
                 </Button>
                 
