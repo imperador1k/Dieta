@@ -41,19 +41,19 @@ export default function MealCategoriesWidget() {
     return (
         <Card className="glass-card">
             <CardHeader>
-                <div className="flex justify-between items-start">
-                    <div>
+                <div className="flex flex-wrap justify-between items-start gap-4">
+                    <div className="flex-grow">
                         <CardTitle>Calendário do Dia</CardTitle>
                         <CardDescription>Adicione e organize as suas refeições para o dia selecionado.</CardDescription>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
                         <Button variant="outline" onClick={addMealCategory}>
                             <PlusCircle className="mr-2 h-4 w-4" />
                             Adicionar Calendário
                         </Button>
                         
                         <Select defaultValue="descanso">
-                            <SelectTrigger className="w-[180px]">
+                            <SelectTrigger className="w-full sm:w-[180px]">
                                 <SelectValue placeholder="Selecione a variação" />
                             </SelectTrigger>
                             <SelectContent>

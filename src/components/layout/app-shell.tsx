@@ -38,6 +38,7 @@ function Header() {
       >
         <Link href="/" className="flex items-center space-x-2">
           <Icons.Logo className="h-8 w-8 text-primary transition-transform duration-300 hover:scale-110" />
+          <span className="hidden font-bold text-xl tracking-tight text-foreground sm:inline-block">DietaS</span>
         </Link>
         <nav className="absolute left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 md:block">
           <ul className="flex items-center gap-2">
@@ -114,7 +115,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="relative flex min-h-screen flex-col">
       <Header />
-      <main className="flex-1 pt-24 pb-24 md:pb-0">
+      <main className="flex-1 pt-24 pb-24 md:pb-8">
         <div className="container mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
             {children}
         </div>
