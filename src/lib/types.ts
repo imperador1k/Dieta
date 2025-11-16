@@ -46,3 +46,11 @@ export interface Plan {
     };
     variations: Variation[];
 }
+
+export interface Dish {
+    id: string;
+    name: string;
+    description: string;
+    ingredients: FoodItemData[];
+    instructions: string;
+}

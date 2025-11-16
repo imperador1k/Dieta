@@ -4,3 +4,4 @@ config();
 
 import '@/ai/flows/ai-food-logger.ts';
 import '@/ai/flows/ai-portion-estimator.ts';
+import '@/ai/flows/ai-recipe-generator.ts';

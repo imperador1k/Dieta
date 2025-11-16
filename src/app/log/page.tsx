@@ -1,12 +1,62 @@
+
+'use client';
+
+import { useState } from "react";
 import { AppShell } from "@/components/layout/app-shell";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { BookCopy, PlusCircle, Search } from "lucide-react";
+import { DishEditor } from "@/components/dishes/dish-editor";
+import { Dish, FoodItemData } from "@/lib/types";
 
 export default function LogPage() {
+    const [dishes, setDishes] = useState<Dish[]>([]);
+    const [isEditorOpen, setIsEditorOpen] = useState(false);
+    const [dishToEdit, setDishToEdit] = useState<Dish | null>(null);
+
+    const handleSaveDish = (dish: Dish) => {
+        const index = dishes.findIndex(d => d.id === dish.id);
+        if (index > -1) {
+            const newDishes = [...dishes];
+            newDishes[index] = dish;
+            setDishes(newDishes);
+        } else {
+            setDishes([...dishes, dish]);
+        }
+        setIsEditorOpen(false);
+        setDishToEdit(null);
+    }
+    
+    const openNewDishEditor = () => {
+        setDishToEdit(null);
+        setIsEditorOpen(true);
+    }
+    
+    const openEditDishEditor = (dish: Dish) => {
+        setDishToEdit(dish);
+        setIsEditorOpen(true);
+    }
+
+    const calculateDishTotals = (items: FoodItemData[]) => {
+        return items.reduce((totals, item) => {
+            const servingMultiplier = item.servingSize / 100;
+            totals.calories += item.nutrients.calories * servingMultiplier;
+            totals.protein += item.nutrients.protein * servingMultiplier;
+            totals.carbs += item.nutrients.carbohydrates * servingMultiplier;
+            totals.fat += item.nutrients.fat * servingMultiplier;
+            return totals;
+        }, { calories: 0, protein: 0, carbs: 0, fat: 0 });
+    }
+
     return (
         <AppShell>
+            <DishEditor
+                open={isEditorOpen}
+                onOpenChange={setIsEditorOpen}
+                onSave={handleSaveDish}
+                dish={dishToEdit}
+            />
             <div className="max-w-4xl mx-auto">
                 <Card className="glass-card">
                     <CardHeader className="flex flex-row items-center justify-between">
@@ -14,7 +64,7 @@ export default function LogPage() {
                             <CardTitle className="flex items-center gap-2"><BookCopy /> Livro de Receitas</CardTitle>
                             <CardDescription>Crie, edite e gira os seus pratos e receitas personalizadas.</CardDescription>
                         </div>
-                        <Button>
+                        <Button onClick={openNewDishEditor}>
                             <PlusCircle className="mr-2 h-4 w-4" />
                             Criar Prato
                         </Button>
@@ -25,11 +75,31 @@ export default function LogPage() {
                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                 <Input placeholder="Procurar nos seus pratos..." className="pl-10" />
                             </div>
-                            <div className="text-center text-muted-foreground py-16 border-2 border-dashed border-muted-foreground/20 rounded-lg">
-                                <BookCopy className="mx-auto h-12 w-12 text-muted-foreground/50" />
-                                <h3 className="mt-4 text-lg font-semibold">Ainda não tem pratos</h3>
-                                <p className="mt-2 text-sm">Comece por criar o seu primeiro prato ou receita.</p>
-                            </div>
+                            {dishes.length === 0 ? (
+                                <div className="text-center text-muted-foreground py-16 border-2 border-dashed border-muted-foreground/20 rounded-lg">
+                                    <BookCopy className="mx-auto h-12 w-12 text-muted-foreground/50" />
+                                    <h3 className="mt-4 text-lg font-semibold">Ainda não tem pratos</h3>
+                                    <p className="mt-2 text-sm">Comece por criar o seu primeiro prato ou receita.</p>
+                                </div>
+                            ) : (
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    {dishes.map(dish => {
+                                        const totals = calculateDishTotals(dish.ingredients);
+                                        return (
+                                            <button key={dish.id} onClick={() => openEditDishEditor(dish)} className="p-4 rounded-lg bg-muted/40 text-left hover:bg-muted/80 transition-colors">
+                                                <h3 className="font-semibold">{dish.name}</h3>
+                                                <p className="text-sm text-muted-foreground">{dish.description}</p>
+                                                <div className="flex items-center gap-4 text-xs mt-2 text-muted-foreground">
+                                                    <span>{totals.calories.toFixed(0)} kcal</span>
+                                                    <span>P: {totals.protein.toFixed(1)}g</span>
+                                                    <span>H: {totals.carbs.toFixed(1)}g</span>
+                                                    <span>G: {totals.fat.toFixed(1)}g</span>
+                                                </div>
+                                            </button>
+                                        )
+                                    })}
+                                </div>
+                            )}
                         </div>
                     </CardContent>
                 </Card>

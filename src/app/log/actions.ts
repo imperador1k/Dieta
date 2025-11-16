@@ -1,6 +1,7 @@
 'use server';
 
 import { aiFoodLogger, type AiFoodLoggerOutput } from '@/ai/flows/ai-food-logger';
+import { aiRecipeGenerator } from '@/ai/flows/ai-recipe-generator';
 import { getFoodDetailsUsda, searchFoodsUsda } from '@/services/usda';
 import { z } from 'zod';
 
@@ -59,5 +60,15 @@ export async function getFoodDetails(fdcId: number) {
     } catch (error) {
         console.error("Error getting food details:", error);
         return null;
+    }
+}
+
+export async function generateRecipe(dishName: string, ingredients: string[]) {
+    try {
+        const result = await aiRecipeGenerator({ dishName, ingredients });
+        return result.instructions;
+    } catch (error) {
+        console.error("Error generating recipe:", error);
+        return "Não foi possível gerar a receita neste momento.";
     }
 }
