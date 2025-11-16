@@ -1,7 +1,7 @@
 'use client';
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
+import { motion } from 'framer-motion';
 
 const SaltIcon = (props: React.SVGProps<SVGSVGElement>) => (
     <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -41,37 +41,56 @@ type Micronutrient = {
   goal: number;
   unit: string;
   icon: React.ElementType;
+  color: string;
 };
 
 const micronutrientsData: Micronutrient[] = [
-  { name: 'Sódio', consumed: 1800, goal: 2300, unit: 'mg', icon: SaltIcon },
-  { name: 'Potássio', consumed: 3000, goal: 3500, unit: 'mg', icon: PotassiumIcon },
-  { name: 'Vitamina D', consumed: 15, goal: 20, unit: 'µg', icon: VitaminDIcon },
-  { name: 'Cálcio', consumed: 800, goal: 1000, unit: 'mg', icon: CalciumIcon },
+  { name: 'Sódio', consumed: 1800, goal: 2300, unit: 'mg', icon: SaltIcon, color: 'hsl(var(--chart-1))' },
+  { name: 'Potássio', consumed: 3000, goal: 3500, unit: 'mg', icon: PotassiumIcon, color: 'hsl(var(--chart-2))' },
+  { name: 'Vitamina D', consumed: 15, goal: 20, unit: 'µg', icon: VitaminDIcon, color: 'hsl(var(--chart-3))' },
+  { name: 'Cálcio', consumed: 800, goal: 1000, unit: 'mg', icon: CalciumIcon, color: 'hsl(var(--chart-4))' },
 ];
+
+const ProgressBar = ({ value, color, delay }: { value: number; color: string; delay: number }) => {
+    const safeValue = Math.max(0, Math.min(100, value));
+    return (
+        <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted/30">
+            <motion.div
+                className="h-full rounded-full"
+                style={{ background: color }}
+                initial={{ width: 0 }}
+                animate={{ width: `${safeValue}%` }}
+                transition={{ duration: 1, ease: 'easeOut', delay }}
+            />
+        </div>
+    );
+};
 
 export default function MicronutrientsWidget() {
     return (
         <Card className="glass-card">
             <CardHeader>
-                <CardTitle className="font-headline">Micronutrientes Chave</CardTitle>
-                <CardDescription>Resumo do consumo diário</CardDescription>
+                <CardTitle>Micronutrientes Chave</CardTitle>
+                <CardDescription>Resumo do consumo diário de vitaminas e minerais.</CardDescription>
             </CardHeader>
-            <CardContent className="grid gap-6 sm:grid-cols-2">
-                {micronutrientsData.map((micro) => {
+            <CardContent className="grid gap-x-8 gap-y-6 sm:grid-cols-2">
+                {micronutrientsData.map((micro, index) => {
                     const percentage = (micro.consumed / micro.goal) * 100;
                     
                     return (
                         <div key={micro.name} className="flex items-center gap-4">
-                            <div className="bg-primary/10 p-2 rounded-lg">
-                                <micro.icon className="h-6 w-6 text-primary" />
+                            <div className="bg-muted/30 p-3 rounded-lg">
+                                <micro.icon className="h-6 w-6" style={{ color: micro.color }} />
                             </div>
-                            <div className="flex-1 space-y-1">
+                            <div className="flex-1 space-y-2">
                                 <div className="flex justify-between items-baseline">
-                                    <p className="font-medium">{micro.name}</p>
-                                    <p className="text-sm text-muted-foreground">{micro.consumed} / {micro.goal} {micro.unit}</p>
+                                    <p className="font-medium text-foreground">{micro.name}</p>
+                                    <p className="text-sm text-muted-foreground">
+                                        <span className="font-semibold text-foreground">{micro.consumed}</span>
+                                        /{micro.goal} {micro.unit}
+                                    </p>
                                 </div>
-                                <Progress value={percentage > 100 ? 100 : percentage} className="h-2" />
+                                <ProgressBar value={percentage} color={micro.color} delay={index * 0.15} />
                             </div>
                         </div>
                     )

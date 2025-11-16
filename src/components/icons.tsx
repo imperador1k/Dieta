@@ -1,22 +1,45 @@
 import type { LucideProps } from "lucide-react";
+import { forwardRef } from 'react';
 
 export const Icons = {
-  Logo: (props: LucideProps) => (
+  Logo: forwardRef<SVGSVGElement, LucideProps>((props, ref) => (
     <svg
+      ref={ref}
       xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
+      viewBox="0 0 256 256"
       {...props}
     >
-      <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2Z" />
-      <path d="m15.5 7.5-3 3-1.5 1.5-3-3" />
-      <path d="M8.5 13.5v4" />
-      <path d="M12.5 13.5v4" />
-      <path d="M16.5 13.5v4" />
+      <rect width="256" height="256" fill="none" />
+      <path
+        d="M168,40.7a96,96,0,1,1-80,0"
+        fill="none"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="24"
+      />
+      <line
+        x1="128"
+        y1="120"
+        x2="128"
+        y2="232"
+        fill="none"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="24"
+      />
+      <line
+        x1="128"
+        y1="120"
+        x2="167.6"
+        y2="96.2"
+        fill="none"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="24"
+      />
     </svg>
-  ),
+  )),
 };

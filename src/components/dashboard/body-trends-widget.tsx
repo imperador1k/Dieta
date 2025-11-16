@@ -1,15 +1,13 @@
 'use client';
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
-  ChartLegend,
-  ChartLegendContent,
 } from "@/components/ui/chart";
-import { AreaChart, Area, CartesianGrid, XAxis } from "recharts";
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { AreaChart, Area, CartesianGrid, XAxis, Tooltip } from "recharts";
+import { Weight, Percent } from 'lucide-react';
 
 const chartData = [
   { month: "Jan", weight: 80, fat: 20 },
@@ -24,10 +22,12 @@ const chartConfig = {
   weight: {
     label: "Peso (kg)",
     color: "hsl(var(--primary))",
+    icon: Weight,
   },
   fat: {
     label: "% Gordura",
-    color: "hsl(var(--accent))",
+    color: "hsl(var(--chart-3))",
+    icon: Percent,
   },
 };
 
@@ -35,47 +35,58 @@ export default function BodyTrendsWidget() {
   return (
     <Card className="glass-card">
       <CardHeader>
-        <CardTitle className="font-headline">Tendências Corporais</CardTitle>
-        <Tabs defaultValue="3m" className="w-full mt-2">
-            <TabsList className="grid w-full grid-cols-3 h-8">
-                <TabsTrigger value="1m" className="text-xs h-6">1M</TabsTrigger>
-                <TabsTrigger value="3m" className="text-xs h-6">3M</TabsTrigger>
-                <TabsTrigger value="6m" className="text-xs h-6">6M</TabsTrigger>
-            </TabsList>
-        </Tabs>
+        <CardTitle className="flex items-center gap-2">Tendências Corporais</CardTitle>
+        <CardDescription>Evolução do peso e % de gordura.</CardDescription>
       </CardHeader>
       <CardContent>
         <ChartContainer config={chartConfig} className="h-[200px] w-full">
           <AreaChart
             accessibilityLayer
             data={chartData}
-            margin={{ left: 0, right: 12, top: 4 }}
+            margin={{ left: 0, right: 12, top: 4, bottom: 0 }}
           >
             <defs>
               <linearGradient id="fillWeight" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="var(--color-weight)" stopOpacity={0.8} />
-                <stop offset="95%" stopColor="var(--color-weight)" stopOpacity={0.1} />
+                <stop offset="5%" stopColor="var(--color-weight)" stopOpacity={0.6} />
+                <stop offset="95%" stopColor="var(--color-weight)" stopOpacity={0.0} />
               </linearGradient>
               <linearGradient id="fillFat" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="var(--color-fat)" stopOpacity={0.8} />
-                <stop offset="95%" stopColor="var(--color-fat)" stopOpacity={0.1} />
+                <stop offset="5%" stopColor="var(--color-fat)" stopOpacity={0.5} />
+                <stop offset="95%" stopColor="var(--color-fat)" stopOpacity={0.0} />
               </linearGradient>
             </defs>
-            <CartesianGrid vertical={false} strokeDasharray="3 3" className="stroke-muted-foreground/30"/>
+            <CartesianGrid vertical={false} strokeDasharray="3 3" className="stroke-muted/20"/>
             <XAxis
               dataKey="month"
               tickLine={false}
               axisLine={false}
-              tickMargin={8}
+              tickMargin={10}
               tickFormatter={(value) => value.slice(0, 3)}
+              className="text-xs"
             />
-            <ChartTooltip cursor={false} content={<ChartTooltipContent indicator="dot" />} />
+            <Tooltip
+              cursor={{ stroke: "hsl(var(--border))", strokeWidth: 1, strokeDasharray: "3 3" }}
+              content={<ChartTooltipContent 
+                indicator="dot"
+                formatter={(value, name) => (
+                  <div className="flex items-center gap-2">
+                    <span className="font-semibold" style={{ color: chartConfig[name as keyof typeof chartConfig].color }}>
+                      {chartConfig[name as keyof typeof chartConfig].label}
+                    </span>
+                    <span>{value}{name === 'weight' ? ' kg' : '%'}</span>
+                  </div>
+                )}
+                labelFormatter={(label) => `Mês: ${label}`}
+              />}
+            />
             <Area
               dataKey="weight"
               type="natural"
               fill="url(#fillWeight)"
               stroke="var(--color-weight)"
-              strokeWidth={2}
+              strokeWidth={2.5}
+              stackId="a"
+              className="chart-glow"
             />
              <Area
               dataKey="fat"
@@ -83,9 +94,8 @@ export default function BodyTrendsWidget() {
               fill="url(#fillFat)"
               stroke="var(--color-fat)"
               strokeWidth={2}
-              className="chart-glow"
+              stackId="b"
             />
-             <ChartLegend content={<ChartLegendContent />} />
           </AreaChart>
         </ChartContainer>
       </CardContent>
