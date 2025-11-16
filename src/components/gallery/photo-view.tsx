@@ -29,8 +29,8 @@ export default function PhotoView({ photo, onClose }: PhotoViewProps) {
                     <span className="sr-only">Fechar</span>
                 </Button>
                 
-                <div className="flex-1 w-full h-full flex items-center justify-center overflow-auto p-4 sm:p-8">
-                    <div className="relative w-auto h-auto max-w-full max-h-full flex-shrink-0">
+                <div className="flex-1 w-full h-full flex items-center justify-center overflow-hidden p-4 sm:p-8">
+                    <div className="relative w-auto h-auto max-w-full max-h-full">
                         <Image
                           src={photo.imageUrl}
                           alt={`Evolução em ${photo.date}`}
