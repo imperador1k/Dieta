@@ -104,8 +104,10 @@ export function DishEditor({ open, onOpenChange, onSave, dish: initialDish }: Di
             <FoodSearchDialog 
                 open={isSearchOpen}
                 onOpenChange={setIsSearchOpen}
-                onFoodConfirm={handleFoodConfirm}
+                onConfirm={handleFoodConfirm}
                 foodToEdit={foodToEdit}
+                savedDishes={[]}
+                hideDishesTab={true}
             />
             <Sheet open={open} onOpenChange={onOpenChange}>
                 <SheetContent className="sm:max-w-xl w-full flex flex-col p-0">
@@ -150,10 +152,11 @@ export function DishEditor({ open, onOpenChange, onSave, dish: initialDish }: Di
                                         {dish.ingredients.map(item => (
                                             <FoodItem 
                                                 key={item.id} 
-                                                item={item}
+                                                item={{...item, type: 'food'}}
                                                 onRemove={() => handleRemoveFood(item.id)} 
                                                 onEdit={() => handleEditFood(item)}
                                                 onToggleEaten={() => {}} // Not used here
+                                                onToggleIngredient={() => {}} // Not used here
                                             />
                                         ))}
                                     </div>

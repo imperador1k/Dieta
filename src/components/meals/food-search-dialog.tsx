@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { getFoodDetails, searchFood } from '@/app/log/actions';
 import type { FoodSearchResult, FoodDetails } from '@/services/usda';
-import type { FoodItemData, Dish } from '@/lib/types';
+import type { FoodItemData, Dish, MealItem } from '@/lib/types';
 import { Loader2, Plus, PlusCircle, Scale, Utensils, Flame, Fish, Wheat, Droplet, Pencil, Search, CircleDashed, CookingPot, BookOpen } from 'lucide-react';
 import { ScrollArea } from '../ui/scroll-area';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -268,12 +268,14 @@ export function FoodSearchDialog({
     onConfirm,
     foodToEdit,
     savedDishes,
+    hideDishesTab,
 }: {
     open: boolean;
     onOpenChange: (open: boolean) => void;
-    onConfirm: (item: FoodItemData | Dish) => void;
+    onConfirm: (item: MealItem) => void;
     foodToEdit: FoodItemData | null;
     savedDishes: Dish[];
+    hideDishesTab?: boolean;
 }) {
     const [query, setQuery] = useState('');
     const debouncedQuery = useDebounce(query, 300);
@@ -328,12 +330,12 @@ export function FoodSearchDialog({
     }
 
     const handleConfirmFood = (food: FoodItemData) => {
-        onConfirm(food);
+        onConfirm({ ...food, type: 'food' });
         resetAndClose();
     };
 
     const handleConfirmDish = (dish: Dish) => {
-        const dishWithNewId: Dish = { ...dish, id: `dish-instance-${Date.now()}` };
+        const dishWithNewId: Dish & { type: 'dish' } = { ...dish, id: `dish-instance-${Date.now()}`, type: 'dish' };
         onConfirm(dishWithNewId);
         resetAndClose();
     }
@@ -358,6 +360,68 @@ export function FoodSearchDialog({
     const currentView = editingFoodDetails ? 'details' : selectedFood ? 'details' : 'search';
     const foodForDetails = editingFoodDetails || selectedFood;
     const hasSearchQuery = debouncedQuery.length > 1;
+
+    const searchContent = (
+         <motion.div
+            key="search"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="px-6 pb-6 space-y-4"
+        >
+            <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                <Input
+                    placeholder="Procure por alimentos (ex: frango, arroz, maçã...)"
+                    value={query}
+                    onChange={e => setQuery(e.target.value)}
+                    className='h-12 pl-11 text-base border-2 border-muted focus-visible:border-primary focus-visible:ring-primary/20 focus-visible:ring-4'
+                />
+            </div>
+            <ScrollArea className="h-80 -mx-6">
+                <div className="px-6">
+                    {isSearching ? (
+                        <SearchSkeleton />
+                    ) : hasSearchQuery ? (
+                        <>
+                            {results.length === 0 && (
+                                <p className="text-center text-sm text-muted-foreground p-8">
+                                    Nenhum resultado encontrado para "{debouncedQuery}".
+                                </p>
+                            )}
+                            <div className="space-y-2">
+                                <AnimatePresence>
+                                    {results.map(result => (
+                                        <SearchResultItem
+                                            key={result.fdcId}
+                                            result={result}
+                                            onSelect={handleSelectResult}
+                                        />
+                                    ))}
+                                </AnimatePresence>
+                            </div>
+                        </>
+                    ) : (
+                        <div className='flex flex-col items-center justify-center text-center h-full pt-12'>
+                            <div className="flex items-center justify-center w-20 h-20 bg-muted rounded-full mb-6">
+                                <Search className="w-10 h-10 text-muted-foreground" />
+                            </div>
+                            <h3 className="font-semibold text-lg">Procure por alimentos</h3>
+                            <p className='text-muted-foreground text-sm max-w-xs'>Comece a digitar para encontrar alimentos na nossa base de dados</p>
+                            <div className='flex flex-wrap gap-2 justify-center mt-6'>
+                                {suggestionChips.map(chip => (
+                                    <Button key={chip} variant="outline" size="sm" onClick={() => setQuery(chip)}>
+                                        {chip}
+                                    </Button>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+                </div>
+            </ScrollArea>
+        </motion.div>
+    );
 
     return (
         <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -384,6 +448,18 @@ export function FoodSearchDialog({
                                 />
                              )}
                         </div>
+                   ) : hideDishesTab ? (
+                        <>
+                            <div className="p-6 pb-0">
+                                <DialogHeader className='text-left'>
+                                   <DialogTitle className='text-2xl text-primary font-bold'>Adicionar Ingrediente</DialogTitle>
+                                   <DialogDescription>
+                                       Procure na base de dados por um alimento para adicionar ao seu prato.
+                                   </DialogDescription>
+                                </DialogHeader>
+                            </div>
+                            {searchContent}
+                        </>
                    ) : (
                        <Tabs defaultValue="search" className="w-full">
                            <div className="p-6">
@@ -399,72 +475,14 @@ export function FoodSearchDialog({
                                </TabsList>
                            </div>
                            <TabsContent value="search">
-                               <motion.div
-                                   key="search"
-                                   initial={{ opacity: 0 }}
-                                   animate={{ opacity: 1 }}
-                                   exit={{ opacity: 0 }}
-                                   transition={{ duration: 0.2 }}
-                                   className="px-6 pb-6 space-y-4"
-                               >
-                                   <div className="relative">
-                                       <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                                       <Input
-                                           placeholder="Procure por alimentos (ex: frango, arroz, maçã...)"
-                                           value={query}
-                                           onChange={e => setQuery(e.target.value)}
-                                           className='h-12 pl-11 text-base border-2 border-muted focus-visible:border-primary focus-visible:ring-primary/20 focus-visible:ring-4'
-                                       />
-                                   </div>
-                                   <ScrollArea className="h-80 -mx-6">
-                                       <div className="px-6">
-                                           {isSearching ? (
-                                               <SearchSkeleton />
-                                           ) : hasSearchQuery ? (
-                                               <>
-                                                   {results.length === 0 && (
-                                                       <p className="text-center text-sm text-muted-foreground p-8">
-                                                           Nenhum resultado encontrado para "{debouncedQuery}".
-                                                       </p>
-                                                   )}
-                                                   <div className="space-y-2">
-                                                       <AnimatePresence>
-                                                           {results.map(result => (
-                                                               <SearchResultItem
-                                                                   key={result.fdcId}
-                                                                   result={result}
-                                                                   onSelect={handleSelectResult}
-                                                               />
-                                                           ))}
-                                                       </AnimatePresence>
-                                                   </div>
-                                               </>
-                                           ) : (
-                                               <div className='flex flex-col items-center justify-center text-center h-full pt-12'>
-                                                   <div className="flex items-center justify-center w-20 h-20 bg-muted rounded-full mb-6">
-                                                       <Search className="w-10 h-10 text-muted-foreground" />
-                                                   </div>
-                                                   <h3 className="font-semibold text-lg">Procure por alimentos</h3>
-                                                   <p className='text-muted-foreground text-sm max-w-xs'>Comece a digitar para encontrar alimentos na nossa base de dados</p>
-                                                   <div className='flex flex-wrap gap-2 justify-center mt-6'>
-                                                       {suggestionChips.map(chip => (
-                                                           <Button key={chip} variant="outline" size="sm" onClick={() => setQuery(chip)}>
-                                                               {chip}
-                                                           </Button>
-                                                       ))}
-                                                   </div>
-                                               </div>
-                                           )}
-                                       </div>
-                                   </ScrollArea>
-                               </motion.div>
+                               {searchContent}
                            </TabsContent>
                            <TabsContent value="dishes">
                                 <ScrollArea className="h-[28rem]">
                                     <div className="px-6 pb-6">
                                         <MyDishesList onDishSelect={handleConfirmDish} savedDishes={savedDishes} />
                                     </div>
-                               </ScrollArea>
+                                </ScrollArea>
                            </TabsContent>
                        </Tabs>
                     )}
