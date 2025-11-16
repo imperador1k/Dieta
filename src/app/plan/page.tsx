@@ -80,7 +80,7 @@ export default function PlanPage() {
 
     return (
         <AppShell>
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 <div className="lg:col-span-1">
                    <PlanList 
                         plans={plans}
