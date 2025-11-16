@@ -4,16 +4,17 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Flame, Target, CheckCircle, Repeat } from "lucide-react";
+import { Flame, Target, CheckCircle, Repeat, Fish, Wheat, Droplet } from "lucide-react";
 import PlanDayVariation from "./plan-day-variation";
 import type { Plan, Variation } from "@/lib/types";
 import { motion } from "framer-motion";
 
 
-const MacroStat = ({ label, value, unit, color }: { label: string, value: number, unit: string, color: string }) => (
+const MacroStat = ({ label, value, unit, color, Icon }: { label: string, value: number, unit: string, color: string, Icon: React.ElementType }) => (
     <div className="flex flex-col items-center justify-center p-4 rounded-lg bg-muted/50">
-        <p className="text-sm text-muted-foreground">{label}</p>
-        <p className="text-2xl font-bold" style={{ color }}>{value}{unit}</p>
+        <Icon className="w-6 h-6 mb-2" style={{ color }}/>
+        <p className="text-2xl font-bold">{value}{unit}</p>
+        <p className="text-sm text-muted-foreground -mt-1">{label}</p>
     </div>
 );
 
@@ -57,14 +58,14 @@ export default function PlanDetails({ plan, onSetActive, onVariationsChange }: P
                     <div>
                         <h3 className="text-lg font-semibold mb-3 flex items-center gap-2"><Target className="w-5 h-5 text-primary"/> Metas Nutricionais</h3>
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                            <div className="flex flex-col items-center justify-center p-4 rounded-lg bg-primary/10 text-primary-foreground col-span-2 md:col-span-1">
-                                <p className="text-sm text-primary">Calorias</p>
-                                <p className="text-4xl font-bold text-primary">{plan.targets.calories}</p>
-                                <p className="text-sm text-primary">kcal</p>
+                            <div className="flex flex-col items-center justify-center p-4 rounded-lg bg-primary/10 text-primary col-span-2 md:col-span-1">
+                                <Flame className="w-8 h-8 mb-1"/>
+                                <p className="text-4xl font-bold">{plan.targets.calories}</p>
+                                <p className="text-sm -mt-1">kcal</p>
                             </div>
-                            <MacroStat label="Proteína" value={plan.targets.protein} unit="g" color="hsl(var(--chart-1))" />
-                            <MacroStat label="Hidratos" value={plan.targets.carbs} unit="g" color="hsl(var(--chart-2))" />
-                            <MacroStat label="Gordura" value={plan.targets.fat} unit="g" color="hsl(var(--chart-3))" />
+                            <MacroStat label="Proteína" value={plan.targets.protein} unit="g" color="hsl(var(--chart-1))" Icon={Fish} />
+                            <MacroStat label="Hidratos" value={plan.targets.carbs} unit="g" color="hsl(var(--chart-2))" Icon={Wheat} />
+                            <MacroStat label="Gordura" value={plan.targets.fat} unit="g" color="hsl(var(--chart-3))" Icon={Droplet} />
                         </div>
                     </div>
                     <div>
