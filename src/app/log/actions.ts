@@ -1,6 +1,7 @@
 'use server';
 
 import { aiFoodLogger, type AiFoodLoggerOutput } from '@/ai/flows/ai-food-logger';
+import { searchFoodsUsda } from '@/services/usda';
 import { z } from 'zod';
 
 const formSchema = z.object({
@@ -37,4 +38,16 @@ export async function getNutritionalInfo(
     console.error(e);
     return { error: 'Falha ao obter informação nutricional. Tente novamente.', timestamp: Date.now() };
   }
+}
+
+export async function searchFood(query: string) {
+    if (!query) return [];
+
+    try {
+        const results = await searchFoodsUsda(query);
+        return results;
+    } catch (error) {
+        console.error("Error searching for food:", error);
+        return [];
+    }
 }
