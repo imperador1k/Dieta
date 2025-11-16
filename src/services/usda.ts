@@ -1,5 +1,6 @@
 // src/services/usda.ts
 
+import { aiPortionEstimator } from "@/ai/flows/ai-portion-estimator";
 import type { FoodPortion } from "@/lib/types";
 
 const USDA_API_KEY = process.env.USDA_API_KEY;
@@ -86,11 +87,28 @@ export async function getFoodDetailsUsda(fdcId: number): Promise<FoodDetails | n
 
   const data = await response.json();
   
-  const portions = data.foodPortions?.map((p: any) => ({
+  let portions: FoodPortion[] = data.foodPortions?.map((p: any) => ({
       id: p.id,
       gramWeight: p.gramWeight,
       portionDescription: p.portionDescription || `${p.amount} ${p.modifier}`
   })) || [];
+
+  // If USDA API doesn't return portions, use AI as a fallback
+  if (portions.length === 0) {
+      try {
+          const aiResult = await aiPortionEstimator({ foodDescription: data.description });
+          if (aiResult.portions && aiResult.portions.length > 0) {
+              portions = aiResult.portions.map((p, index) => ({
+                  id: 1000 + index, // Assign arbitrary IDs for AI-generated portions
+                  gramWeight: p.gramWeight,
+                  portionDescription: p.description,
+              }));
+          }
+      } catch (e) {
+          console.error("AI portion estimator failed:", e);
+      }
+  }
+
 
   return {
     fdcId: data.fdcId,

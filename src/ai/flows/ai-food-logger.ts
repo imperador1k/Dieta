@@ -44,12 +44,28 @@ const aiFoodLoggerPrompt = ai.definePrompt({
   name: 'aiFoodLoggerPrompt',
   input: {schema: AiFoodLoggerInputSchema},
   output: {schema: AiFoodLoggerOutputSchema},
-  prompt: `You are a nutritional expert.  A user will provide a description of the food they ate, and you will provide a structured estimate of the nutritional values of those food items.
+  prompt: `You are a nutritional expert. Your task is to analyze a user's description of the food they ate and provide a structured estimate of its nutritional values.
 
-  Consider common portion sizes when estimating quantities if not explicitly provided.
+Key Responsibilities:
+1.  **Identify Food Items:** Accurately identify all individual food items from the user's description.
+2.  **Estimate Quantities:** If the user does not provide specific quantities, estimate them based on common portion sizes (e.g., a "steak" is likely 150-200g, a "handful of almonds" is about 20-25g).
+3.  **Calculate Nutritional Values:** For each identified food item, estimate the calories, protein, carbohydrates, and fat in grams.
+4.  **Structured Output:** Return the data in the specified JSON format, with each food item as a key.
 
-  Food description: {{{foodDescription}}}
-  `,
+Example:
+User Input: "For lunch, I had a grilled chicken breast with a side of sweet potato fries and a small salad with olive oil dressing."
+Your Estimated Output:
+{
+  "estimatedNutritionalValues": {
+    "grilled chicken breast": { "calories": 220, "protein": 40, "carbohydrates": 0, "fat": 5 },
+    "sweet potato fries": { "calories": 180, "protein": 2, "carbohydrates": 35, "fat": 4 },
+    "small salad with olive oil dressing": { "calories": 100, "protein": 1, "carbohydrates": 5, "fat": 8 }
+  }
+}
+
+User's food description to process:
+"{{{foodDescription}}}"
+`,
 });
 
 const aiFoodLoggerFlow = ai.defineFlow(
