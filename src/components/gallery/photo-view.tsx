@@ -19,7 +19,7 @@ export default function PhotoView({ photo, onClose }: PhotoViewProps) {
     <Dialog open={!!photo} onOpenChange={(isOpen) => !isOpen && onClose()}>
       <AnimatePresence>
         {photo && (
-          <DialogContent className="p-0 sm:p-4 border-0 bg-transparent shadow-none w-full h-full flex flex-col items-center justify-center">
+          <DialogContent className="p-0 sm:p-4 border-0 bg-transparent shadow-none w-full max-w-full h-full max-h-full flex flex-col items-center justify-center">
             <motion.div
               layoutId={`photo-${photo.id}`}
               className="relative w-full h-full flex flex-col items-center justify-center"
@@ -29,33 +29,42 @@ export default function PhotoView({ photo, onClose }: PhotoViewProps) {
                     <span className="sr-only">Fechar</span>
                 </Button>
                 
-                <div className="w-full h-full flex items-center justify-center overflow-auto">
-                    <div className="relative w-auto h-auto max-w-full max-h-[85vh] sm:max-h-[90vh] flex-shrink-0">
+                <div className="flex-1 w-full h-full flex items-center justify-center overflow-auto p-4 sm:p-8">
+                    <div className="relative w-auto h-auto max-w-full max-h-full flex-shrink-0">
                         <Image
                           src={photo.imageUrl}
                           alt={`Evolução em ${photo.date}`}
                           width={photo.width}
                           height={photo.height}
-                          className="w-auto h-auto max-w-full max-h-[85vh] sm:max-h-[90vh] object-contain rounded-none sm:rounded-xl shadow-2xl"
+                          className="w-auto h-auto max-w-full max-h-full object-contain rounded-none sm:rounded-xl shadow-2xl"
                           data-ai-hint={photo.imageHint}
                         />
                     </div>
                 </div>
 
-                <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent text-white sm:rounded-b-xl">
-                  <div className="flex items-center justify-between max-w-md mx-auto">
-                    <div className="flex items-center gap-2">
-                      <Calendar className="w-4 h-4" />
-                      <span className="font-semibold">
-                        {format(new Date(photo.date), "PPP", { locale: pt })}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Weight className="w-4 h-4" />
-                      <span className="font-semibold">{photo.weight} kg</span>
-                    </div>
-                  </div>
-                </div>
+                {photo.date && (
+                    <motion.div 
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.2 }}
+                        className="flex-shrink-0 w-full p-4 bg-gradient-to-t from-black/80 via-black/40 to-transparent text-white sm:rounded-b-xl"
+                    >
+                      <div className="flex items-center justify-around max-w-md mx-auto">
+                        <div className="flex items-center gap-2">
+                          <Calendar className="w-4 h-4" />
+                          <span className="font-semibold">
+                            {format(new Date(photo.date), "PPP", { locale: pt })}
+                          </span>
+                        </div>
+                        {photo.weight && (
+                            <div className="flex items-center gap-2">
+                              <Weight className="w-4 h-4" />
+                              <span className="font-semibold">{photo.weight} kg</span>
+                            </div>
+                        )}
+                      </div>
+                    </motion.div>
+                )}
             </motion.div>
           </DialogContent>
         )}
