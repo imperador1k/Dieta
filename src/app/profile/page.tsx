@@ -1,4 +1,3 @@
-
 'use client';
 
 import { AppShell } from "@/components/layout/app-shell";
@@ -7,32 +6,48 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Save, Ruler } from "lucide-react";
+import { Save, Ruler, Loader2 } from "lucide-react";
 import { AvatarUploader } from "@/components/profile/avatar-uploader";
 import { useAppContext } from "@/app/context/AppContext";
+import { useState, useEffect } from "react";
+import type { UserProfile } from "@/lib/types";
 
 export default function ProfilePage() {
-    const { profile, setProfile } = useAppContext();
+    const { profile: contextProfile, isProfileLoading, saveProfile } = useAppContext();
+    const [localProfile, setLocalProfile] = useState<UserProfile | null>(contextProfile);
+
+    useEffect(() => {
+        setLocalProfile(contextProfile);
+    }, [contextProfile]);
+
+    if (isProfileLoading || !localProfile) {
+        return (
+            <AppShell>
+                <div className="flex justify-center items-center h-full">
+                    <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                </div>
+            </AppShell>
+        )
+    }
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
-        // Convert to number if the field is age or height
         const isNumeric = ['age', 'height'].includes(name);
-        setProfile({ ...profile, [name]: isNumeric ? (value ? parseFloat(value) : 0) : value });
+        setLocalProfile(prev => prev ? { ...prev, [name]: isNumeric ? (value ? parseFloat(value) : 0) : value } : null);
     }
 
     const handleGenderChange = (value: 'male' | 'female') => {
-         setProfile({ ...profile, gender: value });
+         setLocalProfile(prev => prev ? { ...prev, gender: value } : null);
     }
     
     const handleAvatarChange = (newAvatarUrl: string) => {
-        setProfile({ ...profile, avatarUrl: newAvatarUrl });
+        setLocalProfile(prev => prev ? { ...prev, avatarUrl: newAvatarUrl } : null);
     }
 
-    // In a real app, this would likely trigger a database save.
     const handleSaveChanges = () => {
-        console.log("Saving profile:", profile);
-        // Here you would call an action to save the profile to a database.
+        if (localProfile) {
+            saveProfile(localProfile);
+        }
     }
 
     return (
@@ -46,12 +61,12 @@ export default function ProfilePage() {
                 </header>
 
                 <AvatarUploader 
-                    name={profile.name}
-                    email={profile.email}
-                    avatarUrl={profile.avatarUrl}
+                    name={localProfile.name}
+                    email={localProfile.email}
+                    avatarUrl={localProfile.avatarUrl}
                     onAvatarChange={handleAvatarChange}
-                    onNameChange={(name) => setProfile({...profile, name})}
-                    onEmailChange={(email) => setProfile({...profile, email})}
+                    onNameChange={(name) => setLocalProfile(prev => prev ? {...prev, name} : null)}
+                    onEmailChange={(email) => setLocalProfile(prev => prev ? {...prev, email} : null)}
                 />
 
                 <Card className="glass-card">
@@ -62,7 +77,7 @@ export default function ProfilePage() {
                     <CardContent className="grid sm:grid-cols-3 gap-6">
                         <div className="space-y-2">
                             <Label>Género</Label>
-                            <RadioGroup value={profile.gender} onValueChange={handleGenderChange} className="flex gap-4 pt-2">
+                            <RadioGroup value={localProfile.gender} onValueChange={handleGenderChange} className="flex gap-4 pt-2">
                                 <div className="flex items-center space-x-2">
                                     <RadioGroupItem value="male" id="male" />
                                     <Label htmlFor="male">Masculino</Label>
@@ -75,11 +90,11 @@ export default function ProfilePage() {
                         </div>
                         <div className="space-y-1">
                             <Label htmlFor="age">Idade</Label>
-                            <Input id="age" name="age" type="number" value={profile.age} onChange={handleInputChange} />
+                            <Input id="age" name="age" type="number" value={localProfile.age} onChange={handleInputChange} />
                         </div>
                         <div className="space-y-1">
                             <Label htmlFor="height">Altura (cm)</Label>
-                            <Input id="height" name="height" type="number" value={profile.height} onChange={handleInputChange} />
+                            <Input id="height" name="height" type="number" value={localProfile.height} onChange={handleInputChange} />
                         </div>
                     </CardContent>
                 </Card>

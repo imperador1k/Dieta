@@ -1,119 +1,63 @@
-
 'use client';
 
 import React, { createContext, useContext, useState, ReactNode, useEffect, useMemo } from 'react';
-import type { Plan, Dish, BodyMeasurement, UserProfile, Variation, Meal, MealItem } from '@/lib/types';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
-import type { EvolutionPhoto } from '@/lib/types';
+import type { Plan, Dish, BodyMeasurement, UserProfile, Variation, Meal, MealItem, FoodItemData } from '@/lib/types';
+import { useCollection, useDoc, useFirebase } from '@/firebase';
+import { collection, doc, orderBy, query } from 'firebase/firestore';
+import { 
+    addDocumentNonBlocking, 
+    deleteDocumentNonBlocking, 
+    setDocumentNonBlocking,
+    updateDocumentNonBlocking 
+} from '@/firebase/non-blocking-updates';
+import { useMemoFirebase } from '@/firebase/provider';
 
-// Initial mock data, consolidated in one place
-
-const initialPlans: Plan[] = [
-    {
-        id: 'plan-1',
-        name: 'Emagrecimento Intensivo',
-        description: 'Focado na perda de gordura, mantendo a massa muscular.',
-        isActive: true,
-        targets: { calories: 2200, protein: 180, carbs: 200, fat: 70 },
-        variations: [
-            { id: 'var-1', name: 'Dia de Treino A (Cardio)' },
-            { id: 'var-2', name: 'Dia de Treino B (Força)' },
-            { id: 'var-3', name: 'Dia de Descanso' },
-        ],
-    },
-    {
-        id: 'plan-2',
-        name: 'Manutenção Muscular',
-        description: 'Plano para manter o peso atual e a composição corporal.',
-        isActive: false,
-        targets: { calories: 2800, protein: 200, carbs: 300, fat: 90 },
-        variations: [
-             { id: 'var-4', name: 'Dia Normal' },
-        ],
-    },
-];
-
-const initialDishes: Dish[] = [
-    {
-        id: 'dish-1',
-        name: 'Salada de Frango Grelhado',
-        description: 'Uma salada leve e proteica.',
-        instructions: 'Grelhe o frango, corte os vegetais, misture tudo.',
-        ingredients: [
-            { id: 'food-1', fdcId: 171477, description: 'Pechuga de pollo', servingSize: 150, nutrients: { calories: 165, protein: 31, fat: 3.6, carbohydrates: 0 } },
-            { id: 'food-2', fdcId: 169246, description: 'Lechuga romana', servingSize: 100, nutrients: { calories: 17, protein: 1.2, fat: 0.3, carbohydrates: 3.3 } },
-            { id: 'food-3', fdcId: 168429, description: 'Tomate', servingSize: 50, nutrients: { calories: 18, protein: 0.9, fat: 0.2, carbohydrates: 3.9 } },
-        ]
-    }
-];
-
-const initialProfile: UserProfile = {
-    name: 'Utilizador DietaS',
-    email: 'user@dietas.app',
-    age: 30,
-    height: 180,
-    gender: 'male',
-    avatarUrl: 'https://github.com/shadcn.png'
-};
-
-const initialMeasurements: BodyMeasurement[] = [
-    { date: "2024-01-15", weight: 80, neck: 40, waist: 90, hips: 100 },
-    { date: "2024-02-15", weight: 78.5, neck: 39.5, waist: 88, hips: 98 },
-    { date: "2024-03-15", weight: 77, neck: 39, waist: 86, hips: 96 },
-    { date: "2024-05-01", weight: 75.5, neck: 38, waist: 85, hips: 95 },
-];
-
-const initialPhotos: EvolutionPhoto[] = PlaceHolderImages.map((p, index) => ({
-  id: p.id,
-  date: new Date(2024, 4, 15 + index * 5).toISOString(),
-  imageUrl: p.imageUrl,
-  imageHint: p.imageHint,
-  weight: 80 - index * 0.5,
-  width: 1080,
-  height: 1350,
-}));
-
+// Types
 type ConsumedTotals = {
     calories: number;
     protein: number;
     carbs: number;
     fat: number;
 }
-// Types
+
 type MealsByVariation = {
     [variationId: string]: Meal[];
 }
 
 // App Context
 interface AppContextType {
-    // Profile
-    profile: UserProfile;
-    setProfile: (profile: UserProfile) => void;
+    // Auth & Profile
+    profile: UserProfile | null;
+    isProfileLoading: boolean;
+    saveProfile: (profile: Partial<UserProfile>) => void;
 
     // Plans
     plans: Plan[];
-    setPlans: (plans: Plan[]) => void;
+    isPlansLoading: boolean;
     activePlan: Plan | undefined;
     setActivePlan: (planId: string) => void;
     updatePlanVariations: (planId: string, newVariations: Variation[]) => void;
 
     // Dishes
     dishes: Dish[];
-    setDishes: (dishes: Dish[]) => void;
+    isDishesLoading: boolean;
     saveDish: (dish: Dish) => void;
+    deleteDish: (dishId: string) => void;
 
     // Measurements
     measurements: BodyMeasurement[];
-    setMeasurements: (measurements: BodyMeasurement[]) => void;
+    isMeasurementsLoading: boolean;
     saveMeasurement: (measurement: BodyMeasurement) => void;
     
     // Photos
-    photos: EvolutionPhoto[];
-    setPhotos: (photos: EvolutionPhoto[]) => void;
+    photos: any[]; // Replace with EvolutionPhoto[] when implemented with Firestore
+    isPhotosLoading: boolean;
+    setPhotos: (photos: any[]) => void;
 
     // Meals
     mealsByVariation: MealsByVariation;
-    setMealsByVariation: React.Dispatch<React.SetStateAction<MealsByVariation>>;
+    isMealsLoading: boolean;
+    setMealsForVariation: (variationId: string, meals: Meal[]) => void;
     activeVariationId: string | undefined;
     setActiveVariationId: React.Dispatch<React.SetStateAction<string | undefined>>;
     todaysMeals: Meal[];
@@ -124,104 +68,128 @@ interface AppContextType {
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider = ({ children }: { children: ReactNode }) => {
-    const [profile, setProfile] = useState<UserProfile>(initialProfile);
-    const [plans, setPlans] = useState<Plan[]>(initialPlans);
-    const [dishes, setDishes] = useState<Dish[]>(initialDishes);
-    const [measurements, setMeasurements] = useState<BodyMeasurement[]>(initialMeasurements);
-    const [photos, setPhotos] = useState<EvolutionPhoto[]>(initialPhotos);
-    
-    // Meals State
-    const [mealsByVariation, setMealsByVariation] = useState<MealsByVariation>({});
-    const activePlan = plans.find(p => p.isActive);
-    const [activeVariationId, setActiveVariationId] = useState<string | undefined>(activePlan?.variations[0]?.id);
+    const { user, isUserLoading, firestore } = useFirebase();
 
-    // Reset active variation if active plan changes
-     useEffect(() => {
-        const newActivePlan = plans.find(p => p.isActive);
-        if (newActivePlan) {
-            // Check if the current active variation belongs to the new active plan
-            const variationExistsInNewPlan = newActivePlan.variations.some(v => v.id === activeVariationId);
-            if (!variationExistsInNewPlan) {
-                setActiveVariationId(newActivePlan.variations[0]?.id);
-            }
-        } else {
-            setActiveVariationId(undefined);
+    // --- Profile Data ---
+    const profileRef = useMemoFirebase(() => user ? doc(firestore, `users/${user.uid}`) : null, [user, firestore]);
+    const { data: profile, isLoading: isProfileLoading } = useDoc<UserProfile>(profileRef);
+
+    const saveProfile = (newProfileData: Partial<UserProfile>) => {
+        if (profileRef) {
+            updateDocumentNonBlocking(profileRef, newProfileData);
         }
-    }, [plans, activeVariationId]);
-
+    };
+    
+    // --- Plans Data ---
+    const plansRef = useMemoFirebase(() => user ? collection(firestore, `users/${user.uid}/userGoals`) : null, [user, firestore]);
+    const { data: plans, isLoading: isPlansLoading } = useCollection<Plan>(plansRef);
 
     const setActivePlan = (planId: string) => {
-        const newPlans = plans.map(p => ({ ...p, isActive: p.id === planId }));
-        const newActivePlan = newPlans.find(p => p.isActive);
-        setPlans(newPlans);
-        // Automatically set the first variation of the new active plan as active
-        setActiveVariationId(newActivePlan?.variations[0]?.id);
+        if (!plans) return;
+        plans.forEach(p => {
+            const planDocRef = doc(firestore, `users/${user!.uid}/userGoals/${p.id}`);
+            updateDocumentNonBlocking(planDocRef, { isActive: p.id === planId });
+        });
+    };
+    
+    const updatePlanVariations = (planId: string, newVariations: Variation[]) => {
+        if (!user) return;
+        const planDocRef = doc(firestore, `users/${user.uid}/userGoals/${planId}`);
+        updateDocumentNonBlocking(planDocRef, { variations: newVariations });
     };
 
-    const updatePlanVariations = (planId: string, newVariations: Variation[]) => {
-        const newPlans = plans.map(p => 
-            p.id === planId ? { ...p, variations: newVariations } : p
-        );
-        setPlans(newPlans);
-    };
+    const activePlan = useMemo(() => plans?.find(p => p.isActive), [plans]);
+
+    // --- Dishes Data ---
+    const dishesRef = useMemoFirebase(() => user ? collection(firestore, `users/${user.uid}/customFoods`) : null, [user, firestore]);
+    const { data: dishes, isLoading: isDishesLoading } = useCollection<Dish>(dishesRef);
 
     const saveDish = (dish: Dish) => {
-        const index = dishes.findIndex(d => d.id === dish.id);
-        if (index > -1) {
-            const newDishes = [...dishes];
-            newDishes[index] = dish;
-            setDishes(newDishes);
-        } else {
-            setDishes([...dishes, dish]);
-        }
+        if (!user) return;
+        const dishDocRef = doc(firestore, `users/${user.uid}/customFoods/${dish.id}`);
+        setDocumentNonBlocking(dishDocRef, dish, { merge: true });
     };
+
+    const deleteDish = (dishId: string) => {
+        if (!user) return;
+        const dishDocRef = doc(firestore, `users/${user.uid}/customFoods/${dishId}`);
+        deleteDocumentNonBlocking(dishDocRef);
+    }
+
+    // --- Measurements Data ---
+    const measurementsQuery = useMemoFirebase(() => user ? query(collection(firestore, `users/${user.uid}/bodyMetrics`), orderBy('date', 'asc')) : null, [user, firestore]);
+    const { data: measurements, isLoading: isMeasurementsLoading } = useCollection<BodyMeasurement>(measurementsQuery);
     
     const saveMeasurement = (measurement: BodyMeasurement) => {
-        const existingIndex = measurements.findIndex(m => new Date(m.date).toDateString() === new Date(measurement.date).toDateString());
-        
-        let newMeasurements;
-        if (existingIndex > -1) {
-            newMeasurements = [...measurements];
-            newMeasurements[existingIndex] = measurement;
-        } else {
-            newMeasurements = [...measurements, measurement];
-        }
-        
-        newMeasurements.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-        
-        setMeasurements(newMeasurements);
-    }
+        if (!user) return;
+        // Generate a document ID based on the date to avoid duplicates for the same day
+        const docId = new Date(measurement.date).toISOString().split('T')[0];
+        const measurementRef = doc(firestore, `users/${user.uid}/bodyMetrics`, docId);
+        setDocumentNonBlocking(measurementRef, measurement, { merge: true });
+    };
+
+    // --- Photos Data (Placeholder) ---
+    // TODO: Implement with Firebase Storage and Firestore
+    const [photos, setPhotos] = useState([]); 
+    const isPhotosLoading = false;
+
+    // --- Meals Data ---
+    const [activeVariationId, setActiveVariationId] = useState<string | undefined>();
+    const mealsRef = useMemoFirebase(() => user && activeVariationId ? collection(firestore, `users/${user.uid}/dailyLogs/${activeVariationId}/meals`) : null, [user, firestore, activeVariationId]);
+    const { data: rawMeals, isLoading: isMealsLoading } = useCollection<Meal>(mealsRef);
     
-    const todaysMeals = activeVariationId ? mealsByVariation[activeVariationId] || [] : [];
+    const mealsByVariation = useMemo(() => {
+        if (!activeVariationId || !rawMeals) return {};
+        return { [activeVariationId]: rawMeals };
+    }, [rawMeals, activeVariationId]);
+
+    const setMealsForVariation = (variationId: string, meals: Meal[]) => {
+        if (!user) return;
+        // This is a complex operation, might need a transaction or batched write in a real scenario
+        // For now, we update meal by meal
+        meals.forEach(meal => {
+            const mealRef = doc(firestore, `users/${user.uid}/dailyLogs/${variationId}/meals/${meal.id}`);
+            setDocumentNonBlocking(mealRef, meal, { merge: true });
+        });
+    };
+
+     useEffect(() => {
+        if (activePlan && activePlan.variations.length > 0) {
+            const currentVariationStillExists = activePlan.variations.some(v => v.id === activeVariationId);
+            if (!currentVariationStillExists) {
+                setActiveVariationId(activePlan.variations[0].id);
+            }
+        }
+    }, [activePlan, activeVariationId]);
+
+
+    const todaysMeals = useMemo(() => (activeVariationId ? mealsByVariation[activeVariationId] || [] : []), [activeVariationId, mealsByVariation]);
     
     const toggleMealItemEaten = (mealId: string, itemId: string, newEatenState: boolean) => {
-        if (!activeVariationId) return;
-
-        const currentMeals = mealsByVariation[activeVariationId] || [];
+        if (!activeVariationId || !user) return;
         
-        const updatedMeals = currentMeals.map(meal => {
-            if (meal.id === mealId) {
-                const updatedItems = meal.items.map(item => {
-                    if (item.id === itemId) {
-                        const updatedItem = { ...item, eaten: newEatenState };
-                        if (updatedItem.type === 'dish') {
-                            updatedItem.ingredients = updatedItem.ingredients.map(ing => ({...ing, eaten: newEatenState}));
-                        }
-                        return updatedItem;
-                    }
-                    return item;
-                });
-                // Check if all items in meal are eaten to update meal's top-level eaten status
-                const allEaten = updatedItems.every(i => i.eaten);
-                return { ...meal, items: updatedItems, eaten: allEaten };
+        const mealToUpdate = todaysMeals.find(m => m.id === mealId);
+        if (!mealToUpdate) return;
+        
+        const itemToUpdate = mealToUpdate.items.find(i => i.id === itemId);
+        if (!itemToUpdate) return;
+        
+        // This is a deep update. In a real app, you might want to structure data differently
+        // or use field transforms. For now, we update the whole meal object.
+        const updatedItems = mealToUpdate.items.map(item => {
+            if (item.id === itemId) {
+                const updatedItem = { ...item, eaten: newEatenState };
+                if (updatedItem.type === 'dish') {
+                    updatedItem.ingredients = updatedItem.ingredients.map(ing => ({ ...ing, eaten: newEatenState }));
+                }
+                return updatedItem;
             }
-            return meal;
+            return item;
         });
-
-        setMealsByVariation(prev => ({
-            ...prev,
-            [activeVariationId]: updatedMeals,
-        }));
+        
+        const updatedMeal = { ...mealToUpdate, items: updatedItems };
+        const mealRef = doc(firestore, `users/${user.uid}/dailyLogs/${activeVariationId}/meals/${mealId}`);
+        updateDocumentNonBlocking(mealRef, updatedMeal);
     };
     
     const consumedTotals: ConsumedTotals = useMemo(() => {
@@ -239,11 +207,13 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
                         totals.fat += item.nutrients.fat * multiplier;
                     } else if (item.type === 'dish') {
                         item.ingredients.forEach(ingredient => {
-                            const multiplier = ingredient.servingSize / 100;
-                            totals.calories += ingredient.nutrients.calories * multiplier;
-                            totals.protein += ingredient.nutrients.protein * multiplier;
-                            totals.carbs += ingredient.nutrients.carbohydrates * multiplier;
-                            totals.fat += ingredient.nutrients.fat * multiplier;
+                             if(ingredient.eaten) { // Check if individual ingredient is eaten
+                                const multiplier = ingredient.servingSize / 100;
+                                totals.calories += ingredient.nutrients.calories * multiplier;
+                                totals.protein += ingredient.nutrients.protein * multiplier;
+                                totals.carbs += ingredient.nutrients.carbohydrates * multiplier;
+                                totals.fat += ingredient.nutrients.fat * multiplier;
+                            }
                         });
                     }
                 }
@@ -254,16 +224,32 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
 
     const value = {
-        profile, setProfile,
-        plans, setPlans, activePlan, setActivePlan, updatePlanVariations,
-        dishes, setDishes, saveDish,
-        measurements, setMeasurements, saveMeasurement,
-        photos, setPhotos,
-        mealsByVariation, setMealsByVariation,
-        activeVariationId, setActiveVariationId,
+        profile: profile || null,
+        isProfileLoading: isUserLoading || isProfileLoading,
+        saveProfile,
+        plans: plans || [],
+        isPlansLoading: isUserLoading || isPlansLoading,
+        activePlan,
+        setActivePlan,
+        updatePlanVariations,
+        dishes: dishes || [],
+        isDishesLoading: isUserLoading || isDishesLoading,
+        saveDish,
+        deleteDish,
+        measurements: measurements || [],
+        isMeasurementsLoading: isUserLoading || isMeasurementsLoading,
+        saveMeasurement,
+        photos: photos || [],
+        isPhotosLoading: isUserLoading || isPhotosLoading,
+        setPhotos,
+        mealsByVariation,
+        isMealsLoading: isUserLoading || isMealsLoading,
+        setMealsForVariation,
+        activeVariationId,
+        setActiveVariationId,
         todaysMeals,
         toggleMealItemEaten,
-        consumedTotals
+        consumedTotals,
     };
 
     return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

@@ -1,22 +1,31 @@
-
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { AppShell } from "@/components/layout/app-shell";
 import PlanList from '@/components/plan/plan-list';
 import PlanDetails from '@/components/plan/plan-details';
 import type { Plan } from '@/lib/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { FileText } from 'lucide-react';
+import { FileText, Loader2 } from 'lucide-react';
 import { useAppContext } from '@/app/context/AppContext';
+import { Skeleton } from '@/components/ui/skeleton';
 
 
 export default function PlanPage() {
-    const { plans, setActivePlan, updatePlanVariations } = useAppContext();
+    const { plans, isPlansLoading, setActivePlan, updatePlanVariations } = useAppContext();
     const activePlan = plans.find(p => p.isActive);
     
     // The selected plan for viewing, defaults to active plan, but can be changed
-    const [selectedPlan, setSelectedPlan] = useState<Plan | null>(activePlan ?? plans[0] ?? null);
+    const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
+
+    useEffect(() => {
+        if (!isPlansLoading && plans.length > 0) {
+            // Set initial selected plan to the active one, or the first one.
+            if (!selectedPlan) {
+                setSelectedPlan(activePlan || plans[0]);
+            }
+        }
+    }, [plans, isPlansLoading, activePlan, selectedPlan]);
 
     const handleSelectPlan = (plan: Plan) => {
         setSelectedPlan(plan);
@@ -31,6 +40,28 @@ export default function PlanPage() {
         }
     }
     
+    const isLoading = isPlansLoading && plans.length === 0;
+
+    if (isLoading) {
+        return (
+             <AppShell>
+                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <div className="lg:col-span-1 space-y-4">
+                        <Skeleton className="h-10 w-1/2" />
+                        <Skeleton className="h-6 w-3/4" />
+                        <div className="space-y-3">
+                            <Skeleton className="h-28 w-full" />
+                            <Skeleton className="h-28 w-full" />
+                        </div>
+                    </div>
+                    <div className="lg:col-span-2">
+                        <Skeleton className="h-[500px] w-full" />
+                    </div>
+                </div>
+            </AppShell>
+        );
+    }
+
     if (!selectedPlan) {
         return (
              <AppShell>

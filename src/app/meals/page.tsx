@@ -1,4 +1,3 @@
-
 'use client';
 
 import { AppShell } from "@/components/layout/app-shell";
@@ -8,16 +7,17 @@ import type { Meal } from '@/lib/types';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAppContext } from '@/app/context/AppContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { FileWarning } from 'lucide-react';
+import { FileWarning, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect } from "react";
 
 export default function MealsPage() {
     const { 
         activePlan, 
+        isPlansLoading,
         dishes,
-        mealsByVariation,
-        setMealsByVariation,
+        todaysMeals,
+        setMealsForVariation,
         activeVariationId,
         setActiveVariationId,
     } = useAppContext();
@@ -31,15 +31,20 @@ export default function MealsPage() {
         }
     }, [activePlan, activeVariationId, setActiveVariationId]);
 
-    const currentMeals = activeVariationId ? mealsByVariation[activeVariationId] || [] : [];
-
     const handleMealsChange = (newMeals: Meal[]) => {
         if (!activeVariationId) return;
-        setMealsByVariation(prev => ({
-            ...prev,
-            [activeVariationId]: newMeals
-        }));
+        setMealsForVariation(activeVariationId, newMeals);
     };
+
+    if (isPlansLoading) {
+        return (
+            <AppShell>
+                <div className="flex items-center justify-center h-full">
+                    <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                </div>
+            </AppShell>
+        );
+    }
 
     if (!activePlan) {
         return (
@@ -93,11 +98,11 @@ export default function MealsPage() {
                         </div>
                     )}
 
-                    <VariationTotalsWidget meals={currentMeals} planTargets={activePlan.targets} />
+                    <VariationTotalsWidget meals={todaysMeals} planTargets={activePlan.targets} />
                     
                     <MealCategoriesWidget 
                         key={activeVariationId} // Force re-render on variation change
-                        meals={currentMeals}
+                        meals={todaysMeals}
                         onMealsChange={handleMealsChange}
                         savedDishes={dishes}
                     />

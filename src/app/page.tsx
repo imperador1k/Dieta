@@ -5,6 +5,9 @@ import DailyEnergyWidget from '@/components/dashboard/daily-energy-widget';
 import BodyTrendsWidget from '@/components/dashboard/body-trends-widget';
 import TodaysMealsWidget from '@/components/dashboard/todays-meals-widget';
 import { motion } from 'framer-motion';
+import { useAppContext } from './context/AppContext';
+import { initiateAnonymousSignIn } from '@/firebase/non-blocking-login';
+import { useAuth } from '@/firebase';
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -29,6 +32,13 @@ const itemVariants = {
 };
 
 export default function DashboardPage() {
+  const { isProfileLoading } = useAppContext();
+  const auth = useAuth();
+  
+  if (isProfileLoading) {
+    initiateAnonymousSignIn(auth);
+  }
+
   return (
     <AppShell>
       <motion.div

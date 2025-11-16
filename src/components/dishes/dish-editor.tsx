@@ -11,13 +11,14 @@ import { Separator } from "@/components/ui/separator";
 import { FoodSearchDialog } from "@/components/meals/food-search-dialog";
 import FoodItem from "@/components/meals/food-item";
 import { generateRecipe } from "@/app/log/actions";
-import { PlusCircle, Sparkles, Loader2, Save, CookingPot, Pencil, Trash, Flame, Fish, Wheat, Droplet } from "lucide-react";
+import { PlusCircle, Sparkles, Loader2, Save, CookingPot, Pencil, Trash, Flame, Fish, Wheat, Droplet, X } from "lucide-react";
 import type { Dish, FoodItemData } from "@/lib/types";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "../ui/alert-dialog";
+import { useAppContext } from "@/app/context/AppContext";
 
 interface DishEditorProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
-    onSave: (dish: Dish) => void;
     dish: Dish | null;
 }
 
@@ -33,7 +34,8 @@ const MacroBadge = ({ Icon, value, unit, className }: { Icon: React.ElementType,
 );
 
 
-export function DishEditor({ open, onOpenChange, onSave, dish: initialDish }: DishEditorProps) {
+export function DishEditor({ open, onOpenChange, dish: initialDish }: DishEditorProps) {
+    const { saveDish, deleteDish } = useAppContext();
     const [dish, setDish] = useState<Dish>(initialDish || { id: '', name: '', description: '', ingredients: [], instructions: '' });
     const [isSearchOpen, setIsSearchOpen] = useState(false);
     const [foodToEdit, setFoodToEdit] = useState<FoodItemData | null>(null);
@@ -87,8 +89,16 @@ export function DishEditor({ open, onOpenChange, onSave, dish: initialDish }: Di
     };
 
     const handleSave = () => {
-        onSave(dish);
+        saveDish(dish);
+        onOpenChange(false);
     };
+    
+    const handleDelete = () => {
+        if (initialDish) {
+            deleteDish(initialDish.id);
+            onOpenChange(false);
+        }
+    }
 
     const totals = dish.ingredients.reduce((acc, item) => {
         const multiplier = item.servingSize / 100;
@@ -194,10 +204,26 @@ export function DishEditor({ open, onOpenChange, onSave, dish: initialDish }: Di
                         </div>
                     </ScrollArea>
                     <Separator />
-                    <SheetFooter className="p-6 bg-background/80 backdrop-blur-sm">
-                        {initialDish && (
-                            <Button variant="destructive" className="mr-auto"><Trash className="mr-2"/> Apagar Prato</Button>
-                        )}
+                    <SheetFooter className="p-6 bg-background/80 backdrop-blur-sm flex-row justify-end items-center">
+                         {initialDish && (
+                            <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                    <Button variant="destructive" className="mr-auto"><Trash className="mr-2"/> Apagar Prato</Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                        <AlertDialogTitle>Tem a certeza?</AlertDialogTitle>
+                                        <AlertDialogDescription>
+                                            Esta ação não pode ser desfeita. Isto irá apagar permanentemente o prato do seu livro de receitas.
+                                        </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                        <AlertDialogAction onClick={handleDelete}>Apagar</AlertDialogAction>
+                                    </AlertDialogFooter>
+                                </AlertDialogContent>
+                            </AlertDialog>
+                         )}
                         <Button variant="ghost" onClick={() => onOpenChange(false)}>Cancelar</Button>
                         <Button onClick={handleSave}><Save className="mr-2"/> Guardar Prato</Button>
                     </SheetFooter>
