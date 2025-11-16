@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { PlusCircle } from "lucide-react";
 import { useState } from "react";
 import { MeasurementForm } from "@/components/profile/measurement-form";
-import type { BodyMeasurement } from "@/lib/types";
+import type { BodyMeasurement, UserProfile } from "@/lib/types";
 
 // Mock data, in a real app this would be fetched
 const mockInitialMeasurements: BodyMeasurement[] = [
@@ -15,6 +15,12 @@ const mockInitialMeasurements: BodyMeasurement[] = [
     { date: "2024-03-15", weight: 77, neck: 39, waist: 86, hips: 96 },
     { date: "2024-05-01", weight: 75.5, neck: 38, waist: 85, hips: 95 },
 ];
+
+// Mock user profile for calculation purposes
+const mockUserProfile: Pick<UserProfile, 'height' | 'gender'> = {
+    height: 180, // in cm
+    gender: 'male',
+};
 
 
 export default function ProgressPage() {
@@ -49,6 +55,7 @@ export default function ProgressPage() {
                 onOpenChange={setIsFormOpen}
                 onSave={handleSaveMeasurement}
                 latestMeasurement={latestMeasurement}
+                userProfile={mockUserProfile}
             />
             <div className="space-y-8">
                 <header className="flex flex-wrap items-center justify-between gap-4">

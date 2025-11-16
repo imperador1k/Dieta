@@ -12,22 +12,15 @@ import type { UserProfile } from "@/lib/types";
 import { AvatarUploader } from "@/components/profile/avatar-uploader";
 
 // Mock data, in a real app this would come from a user session/database
-const initialProfile: Omit<UserProfile, 'weight' | 'measurements'> & { weight: number, measurements: { neck: number, waist: number, hips?: number} } = {
+const initialProfile: UserProfile = {
     name: 'Utilizador DietaS',
     email: 'user@dietas.app',
     age: 30,
     height: 180,
-    weight: 75,
     gender: 'male',
-    measurements: {
-        neck: 38,
-        waist: 85,
-    },
     avatarUrl: 'https://github.com/shadcn.png'
 }
 
-// The page now handles the full profile type, but we only edit the static parts.
-// The dynamic parts (weight, measurements) are passed to other components.
 export default function ProfilePage() {
     const [profile, setProfile] = useState(initialProfile);
 

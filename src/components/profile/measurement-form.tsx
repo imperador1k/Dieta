@@ -1,24 +1,26 @@
 'use client';
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import { Save, Ruler, Calendar as CalendarIcon, Weight, CircleDotDashed } from "lucide-react";
-import type { BodyMeasurement } from "@/lib/types";
+import { Save, Ruler, Calendar as CalendarIcon, Weight, CircleDotDashed, BrainCircuit, Activity, Bone } from "lucide-react";
+import type { BodyMeasurement, UserProfile } from "@/lib/types";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { Calendar } from "../ui/calendar";
+import { calculateBodyComposition, type BodyComposition } from "@/lib/body-composition";
 
 interface MeasurementFormProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     onSave: (measurement: BodyMeasurement) => void;
     latestMeasurement: BodyMeasurement | null;
+    userProfile: Pick<UserProfile, 'height' | 'gender'>;
 }
 
 const MeasurementInput = ({ label, icon: Icon, value, onChange, placeholder, unit }: { label: string; icon: React.ElementType; value: number | undefined; onChange: (value: string) => void; placeholder: string, unit: string }) => (
@@ -37,7 +39,37 @@ const MeasurementInput = ({ label, icon: Icon, value, onChange, placeholder, uni
     </div>
 );
 
-export function MeasurementForm({ open, onOpenChange, onSave, latestMeasurement }: MeasurementFormProps) {
+const BodyCompositionWidget = ({ composition }: { composition: BodyComposition | null }) => {
+    if (!composition) {
+        return (
+            <div className="text-center text-sm text-muted-foreground p-4 bg-muted/20 rounded-lg">
+                Insira o seu peso, pescoço e cintura para calcular a composição corporal.
+            </div>
+        )
+    }
+
+    return (
+        <div className="grid grid-cols-3 gap-2 text-center">
+            <div className="p-3 bg-muted/50 rounded-lg flex flex-col items-center justify-center gap-1">
+                <BrainCircuit className="w-5 h-5 text-chart-2" />
+                <p className="text-xs text-muted-foreground">Gordura</p>
+                <p className="font-bold text-lg">{composition.bodyFatPercentage.toFixed(1)}%</p>
+            </div>
+             <div className="p-3 bg-muted/50 rounded-lg flex flex-col items-center justify-center gap-1">
+                <Activity className="w-5 h-5 text-chart-3" />
+                <p className="text-xs text-muted-foreground">Massa Gorda</p>
+                <p className="font-bold text-lg">{composition.fatMass.toFixed(1)} kg</p>
+            </div>
+            <div className="p-3 bg-muted/50 rounded-lg flex flex-col items-center justify-center gap-1">
+                <Bone className="w-5 h-5 text-chart-1" />
+                <p className="text-xs text-muted-foreground">Massa Magra</p>
+                <p className="font-bold text-lg">{composition.leanMass.toFixed(1)} kg</p>
+            </div>
+        </div>
+    )
+}
+
+export function MeasurementForm({ open, onOpenChange, onSave, latestMeasurement, userProfile }: MeasurementFormProps) {
     const [measurement, setMeasurement] = useState<BodyMeasurement>({ date: new Date().toISOString() });
     const [date, setDate] = useState<Date | undefined>(new Date());
 
@@ -63,6 +95,17 @@ export function MeasurementForm({ open, onOpenChange, onSave, latestMeasurement 
     const handleSave = () => {
         onSave(measurement);
     };
+
+    const bodyComposition = useMemo(() => {
+        return calculateBodyComposition({
+            gender: userProfile.gender,
+            height: userProfile.height,
+            weight: measurement.weight,
+            neck: measurement.neck,
+            waist: measurement.waist,
+            hips: measurement.hips
+        })
+    }, [measurement, userProfile]);
 
     return (
         <Sheet open={open} onOpenChange={onOpenChange}>
@@ -119,7 +162,7 @@ export function MeasurementForm({ open, onOpenChange, onSave, latestMeasurement 
                         </div>
 
                          <div className="space-y-4">
-                            <h3 className="text-base font-semibold mb-3 flex items-center gap-2"><CircleDotDashed className="w-5 h-5 text-primary"/> Medidas Corporais</h3>
+                            <h3 className="text-base font-semibold flex items-center gap-2"><CircleDotDashed className="w-5 h-5 text-primary"/> Medidas Corporais</h3>
                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <MeasurementInput label="Pescoço" icon={Ruler} value={measurement.neck} onChange={(v) => updateMeasurement('neck', v)} placeholder="38" unit="cm" />
                                 <MeasurementInput label="Cintura" icon={Ruler} value={measurement.waist} onChange={(v) => updateMeasurement('waist', v)} placeholder="85" unit="cm" />
@@ -127,6 +170,12 @@ export function MeasurementForm({ open, onOpenChange, onSave, latestMeasurement 
                                 <p className="text-xs text-muted-foreground sm:col-span-2">A anca é opcional para homens. As medidas são usadas para estimar a % de gordura.</p>
                             </div>
                         </div>
+                        
+                        <div className="space-y-4">
+                            <h3 className="text-base font-semibold flex items-center gap-2"><BrainCircuit className="w-5 h-5 text-primary"/> Estimativa da Composição Corporal</h3>
+                            <BodyCompositionWidget composition={bodyComposition}/>
+                        </div>
+
                     </div>
                 </ScrollArea>
                 <Separator />
