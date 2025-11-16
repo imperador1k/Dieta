@@ -1,7 +1,6 @@
 
 'use client';
 
-import { useState } from 'react';
 import { AppShell } from "@/components/layout/app-shell";
 import VariationTotalsWidget from "@/components/meals/variation-totals-widget";
 import MealCategoriesWidget from "@/components/meals/meal-categories-widget";
@@ -11,29 +10,27 @@ import { useAppContext } from '@/app/context/AppContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { FileWarning } from 'lucide-react';
 import Link from 'next/link';
-
-type MealsByVariation = {
-    [variationId: string]: Meal[];
-}
+import { useEffect } from "react";
 
 export default function MealsPage() {
-    const { activePlan, dishes } = useAppContext();
+    const { 
+        activePlan, 
+        dishes,
+        mealsByVariation,
+        setMealsByVariation,
+        activeVariationId,
+        setActiveVariationId,
+    } = useAppContext();
 
-    // State to hold all meals for all variations across all plans
-    const [mealsByVariation, setMealsByVariation] = useState<MealsByVariation>({});
-    
-    // Determine the current variations and the active variation ID from the active plan
     const currentVariations = activePlan?.variations || [];
-    const [activeVariationId, setActiveVariationId] = useState(currentVariations[0]?.id);
-
-    // If the active plan changes, we might need to reset the active variation
-    useState(() => {
+    
+    // Effect to ensure activeVariationId is valid when component mounts or plan changes
+    useEffect(() => {
         if (activePlan && !activePlan.variations.find(v => v.id === activeVariationId)) {
             setActiveVariationId(activePlan.variations[0]?.id);
         }
-    });
+    }, [activePlan, activeVariationId, setActiveVariationId]);
 
-    // Get the meals for the currently selected variation
     const currentMeals = activeVariationId ? mealsByVariation[activeVariationId] || [] : [];
 
     const handleMealsChange = (newMeals: Meal[]) => {
@@ -69,7 +66,6 @@ export default function MealsPage() {
         );
     }
 
-
     return (
         <AppShell>
             <div className="flex flex-col items-center w-full space-y-8">
@@ -81,7 +77,7 @@ export default function MealsPage() {
                 </div>
 
                 <div className="w-full max-w-4xl mx-auto space-y-6">
-                    {currentVariations.length > 0 && (
+                    {currentVariations.length > 0 && activeVariationId && (
                         <div className="flex justify-between items-center">
                             <h2 className="text-lg font-semibold text-foreground">Variação do Dia</h2>
                             <Select value={activeVariationId} onValueChange={setActiveVariationId}>

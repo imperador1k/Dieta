@@ -1,3 +1,4 @@
+
 import type { FoodDetails } from "@/services/usda";
 
 export type FoodItemData = {
@@ -27,6 +28,7 @@ export interface Meal {
     carbs: number;
     fat: number;
     note?: string;
+    eaten?: boolean;
 };
 
 export type Variation = {

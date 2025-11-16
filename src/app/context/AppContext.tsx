@@ -1,8 +1,8 @@
 
 'use client';
 
-import React, { createContext, useContext, useState, ReactNode } from 'react';
-import type { Plan, Dish, BodyMeasurement, UserProfile, Variation } from '@/lib/types';
+import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import type { Plan, Dish, BodyMeasurement, UserProfile, Variation, Meal } from '@/lib/types';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import type { EvolutionPhoto } from '@/lib/types';
 
@@ -73,6 +73,10 @@ const initialPhotos: EvolutionPhoto[] = PlaceHolderImages.map((p, index) => ({
   height: 1350,
 }));
 
+// Types
+type MealsByVariation = {
+    [variationId: string]: Meal[];
+}
 
 // App Context
 interface AppContextType {
@@ -87,7 +91,6 @@ interface AppContextType {
     setActivePlan: (planId: string) => void;
     updatePlanVariations: (planId: string, newVariations: Variation[]) => void;
 
-
     // Dishes
     dishes: Dish[];
     setDishes: (dishes: Dish[]) => void;
@@ -101,6 +104,14 @@ interface AppContextType {
     // Photos
     photos: EvolutionPhoto[];
     setPhotos: (photos: EvolutionPhoto[]) => void;
+
+    // Meals
+    mealsByVariation: MealsByVariation;
+    setMealsByVariation: React.Dispatch<React.SetStateAction<MealsByVariation>>;
+    activeVariationId: string | undefined;
+    setActiveVariationId: React.Dispatch<React.SetStateAction<string | undefined>>;
+    todaysMeals: Meal[];
+    toggleMealItemEaten: (mealId: string, itemId: string, newEatenState: boolean) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -111,12 +122,33 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     const [dishes, setDishes] = useState<Dish[]>(initialDishes);
     const [measurements, setMeasurements] = useState<BodyMeasurement[]>(initialMeasurements);
     const [photos, setPhotos] = useState<EvolutionPhoto[]>(initialPhotos);
-
+    
+    // Meals State
+    const [mealsByVariation, setMealsByVariation] = useState<MealsByVariation>({});
     const activePlan = plans.find(p => p.isActive);
+    const [activeVariationId, setActiveVariationId] = useState<string | undefined>(activePlan?.variations[0]?.id);
+
+    // Reset active variation if active plan changes
+     useEffect(() => {
+        const newActivePlan = plans.find(p => p.isActive);
+        if (newActivePlan) {
+            // Check if the current active variation belongs to the new active plan
+            const variationExistsInNewPlan = newActivePlan.variations.some(v => v.id === activeVariationId);
+            if (!variationExistsInNewPlan) {
+                setActiveVariationId(newActivePlan.variations[0]?.id);
+            }
+        } else {
+            setActiveVariationId(undefined);
+        }
+    }, [plans, activeVariationId]);
+
 
     const setActivePlan = (planId: string) => {
         const newPlans = plans.map(p => ({ ...p, isActive: p.id === planId }));
+        const newActivePlan = newPlans.find(p => p.isActive);
         setPlans(newPlans);
+        // Automatically set the first variation of the new active plan as active
+        setActiveVariationId(newActivePlan?.variations[0]?.id);
     };
 
     const updatePlanVariations = (planId: string, newVariations: Variation[]) => {
@@ -152,6 +184,38 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         
         setMeasurements(newMeasurements);
     }
+    
+    const todaysMeals = activeVariationId ? mealsByVariation[activeVariationId] || [] : [];
+    
+    const toggleMealItemEaten = (mealId: string, itemId: string, newEatenState: boolean) => {
+        if (!activeVariationId) return;
+
+        const currentMeals = mealsByVariation[activeVariationId] || [];
+        
+        const updatedMeals = currentMeals.map(meal => {
+            if (meal.id === mealId) {
+                const updatedItems = meal.items.map(item => {
+                    if (item.id === itemId) {
+                        const updatedItem = { ...item, eaten: newEatenState };
+                        if (updatedItem.type === 'dish') {
+                            updatedItem.ingredients = updatedItem.ingredients.map(ing => ({...ing, eaten: newEatenState}));
+                        }
+                        return updatedItem;
+                    }
+                    return item;
+                });
+                // Check if all items in meal are eaten to update meal's top-level eaten status
+                const allEaten = updatedItems.every(i => i.eaten);
+                return { ...meal, items: updatedItems, eaten: allEaten };
+            }
+            return meal;
+        });
+
+        setMealsByVariation(prev => ({
+            ...prev,
+            [activeVariationId]: updatedMeals,
+        }));
+    };
 
     const value = {
         profile, setProfile,
@@ -159,6 +223,10 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         dishes, setDishes, saveDish,
         measurements, setMeasurements, saveMeasurement,
         photos, setPhotos,
+        mealsByVariation, setMealsByVariation,
+        activeVariationId, setActiveVariationId,
+        todaysMeals,
+        toggleMealItemEaten,
     };
 
     return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
