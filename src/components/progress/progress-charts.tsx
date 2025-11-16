@@ -3,7 +3,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { TrendingUp, BarChart3, Target, Weight, Percent } from "lucide-react";
-import { Area, AreaChart, Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
+import { Area, AreaChart, Bar, BarChart, CartesianGrid, XAxis, YAxis, Cell } from "recharts";
 import { format } from 'date-fns';
 import { pt } from 'date-fns/locale';
 
@@ -26,7 +26,7 @@ const adherenceData = [
   { date: "2024-05-04", calories: 2100, target: 2200 },
   { date: "2024-05-05", calories: 2210, target: 2200 },
   { date: "2024-05-06", calories: 2050, target: 2200 },
-  { date: "2024-05-07", calories: 2205, target: 2200 },
+  { date: "2024-05-07", calories: 2450, target: 2200 },
 ];
 
 const bodyTrendsConfig = {
@@ -36,9 +36,25 @@ const bodyTrendsConfig = {
 
 const adherenceConfig = {
   calories: { label: "Calorias Consumidas", color: "hsl(var(--primary))" },
+  target: { label: "Meta de Calorias", color: "hsl(var(--muted-foreground))" },
 };
 
 const formatDate = (dateString: string) => format(new Date(dateString), "d MMM", { locale: pt });
+
+const getBarColor = (value: number, target: number) => {
+  const overage = value - target;
+  if (overage <= 0) return "hsl(var(--primary))"; // At or below target
+  
+  const percentageOver = Math.min(overage / (target * 0.25), 1); // Cap at 25% overage for full color change
+  
+  // HSL interpolation from primary (258) to destructive (0)
+  const hue = 258 - (258 * percentageOver);
+  const saturation = 100 - (37 * percentageOver); // From 100% to 63%
+  const lightness = 80 - (49 * percentageOver); // From 80% to 31%
+
+  return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+}
+
 
 export default function ProgressCharts() {
   return (
@@ -84,16 +100,43 @@ export default function ProgressCharts() {
               <CartesianGrid vertical={false} strokeDasharray="3 3" className="stroke-border/50" />
               <XAxis dataKey="date" tickFormatter={formatDate} tickLine={false} axisLine={false} tickMargin={10} />
               <YAxis tickLine={false} axisLine={false} />
-              <ChartTooltip cursor={{ fill: "hsl(var(--muted)/0.5)" }} content={<ChartTooltipContent hideLabel />} />
+              <ChartTooltip 
+                cursor={{ fill: "hsl(var(--muted)/0.5)" }} 
+                content={<ChartTooltipContent
+                    formatter={(value, name, props) => {
+                        const { payload } = props;
+                        if (name === 'calories') {
+                            return (
+                                <>
+                                    <div>
+                                        <span className="font-semibold">Consumido: </span>
+                                        <span>{value} kcal</span>
+                                    </div>
+                                    <div>
+                                        <span className="font-semibold">Meta: </span>
+                                        <span>{payload.target} kcal</span>
+                                    </div>
+                                </>
+                            )
+                        }
+                        return null
+                    }}
+                />} 
+              />
               <Bar
                 dataKey="calories"
+                name="calorias"
                 radius={[8, 8, 0, 0]}
                 barSize={30}
               >
                 {adherenceData.map((entry, index) => (
-                  <Bar
+                  <Cell 
                     key={`cell-${index}`}
-                    fill={entry.calories > entry.target + 50 ? "hsl(var(--destructive))" : "hsl(var(--primary))"}
+                    fill={getBarColor(entry.calories, entry.target)}
+                    className="transition-opacity"
+                    opacity={0.8}
+                    onMouseOver={(e) => e.currentTarget.style.opacity = '1'}
+                    onMouseOut={(e) => e.currentTarget.style.opacity = '0.8'}
                   />
                 ))}
               </Bar>
