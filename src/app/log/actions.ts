@@ -1,7 +1,7 @@
 'use server';
 
 import { aiFoodLogger, type AiFoodLoggerOutput } from '@/ai/flows/ai-food-logger';
-import { searchFoodsUsda } from '@/services/usda';
+import { getFoodDetailsUsda, searchFoodsUsda } from '@/services/usda';
 import { z } from 'zod';
 
 const formSchema = z.object({
@@ -49,5 +49,15 @@ export async function searchFood(query: string) {
     } catch (error) {
         console.error("Error searching for food:", error);
         return [];
+    }
+}
+
+export async function getFoodDetails(fdcId: number) {
+    try {
+        const results = await getFoodDetailsUsda(fdcId);
+        return results;
+    } catch (error) {
+        console.error("Error getting food details:", error);
+        return null;
     }
 }

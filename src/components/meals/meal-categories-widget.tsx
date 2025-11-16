@@ -11,6 +11,9 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { Textarea } from "../ui/textarea";
+import { FoodSearchDialog } from "./food-search-dialog";
+import type { FoodItemData } from "@/lib/types";
+import FoodItem from "./food-item";
 
 const variations = [
     { id: "descanso", label: "Dia de Descanso" },
@@ -21,7 +24,7 @@ const variations = [
 type Meal = {
     id: string;
     name: string;
-    items: any[]; 
+    items: FoodItemData[]; 
     totalCalories: number;
     protein: number;
     carbs: number;
@@ -34,7 +37,7 @@ const initialMeals: Meal[] = [];
 const MacroBadge = ({ Icon, value, unit, className }: { Icon: React.ElementType, value: number, unit: string, className?: string }) => (
     <div className={cn("flex items-center gap-1 text-xs", className)}>
         <Icon className="w-3 h-3" />
-        <span>{value}{unit}</span>
+        <span>{Math.round(value)}{unit}</span>
     </div>
 );
 
@@ -84,6 +87,8 @@ const MealNoteEditor = ({ note, onSave }: { note?: string; onSave: (newNote: str
 
 export default function MealCategoriesWidget() {
     const [meals, setMeals] = useState<Meal[]>(initialMeals);
+    const [isSearchOpen, setIsSearchOpen] = useState(false);
+    const [activeMealId, setActiveMealId] = useState<string | null>(null);
 
     const addMealCategory = () => {
         const newMeal: Meal = {
@@ -103,101 +108,161 @@ export default function MealCategoriesWidget() {
         setMeals(meals.map(m => m.id === mealId ? { ...m, note: newNote } : m));
     }
 
-    return (
-        <Card className="glass-card">
-            <CardHeader>
-                <div className="flex flex-wrap justify-between items-start gap-4">
-                    <div className="flex-grow">
-                        <CardTitle>Calendário do Dia</CardTitle>
-                        <CardDescription>Adicione e organize as suas refeições para o dia selecionado.</CardDescription>
-                    </div>
-                    <div className="flex flex-wrap items-center gap-2">
-                        <Button variant="outline" onClick={addMealCategory}>
-                            <PlusCircle className="mr-2 h-4 w-4" />
-                            Adicionar Calendário
-                        </Button>
-                        
-                        <Select defaultValue="descanso">
-                            <SelectTrigger className="w-full sm:w-[180px]">
-                                <SelectValue placeholder="Selecione a variação" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {variations.map(v => (
-                                    <SelectItem key={v.id} value={v.id}>{v.label}</SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
+    const openFoodSearch = (mealId: string) => {
+        setActiveMealId(mealId);
+        setIsSearchOpen(true);
+    };
 
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon">
-                                    <MoreVertical className="h-4 w-4" />
-                                </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                                <DropdownMenuItem>Editar Variações</DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => setMeals([])}>Limpar Calendários</DropdownMenuItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
+    const addFoodToMeal = (food: FoodItemData) => {
+        if (!activeMealId) return;
+
+        setMeals(meals.map(meal => {
+            if (meal.id === activeMealId) {
+                const updatedItems = [...meal.items, food];
+                const newTotals = updatedItems.reduce((totals, item) => {
+                    const servingMultiplier = item.servingSize / 100;
+                    totals.totalCalories += item.nutrients.calories * servingMultiplier;
+                    totals.protein += item.nutrients.protein * servingMultiplier;
+                    totals.carbs += item.nutrients.carbohydrates * servingMultiplier;
+                    totals.fat += item.nutrients.fat * servingMultiplier;
+                    return totals;
+                }, { totalCalories: 0, protein: 0, carbs: 0, fat: 0 });
+
+                return { ...meal, items: updatedItems, ...newTotals };
+            }
+            return meal;
+        }));
+    };
+    
+    const removeFoodFromMeal = (mealId: string, foodId: string) => {
+        setMeals(meals.map(meal => {
+            if (meal.id === mealId) {
+                const updatedItems = meal.items.filter(item => item.id !== foodId);
+                const newTotals = updatedItems.reduce((totals, item) => {
+                    const servingMultiplier = item.servingSize / 100;
+                    totals.totalCalories += item.nutrients.calories * servingMultiplier;
+                    totals.protein += item.nutrients.protein * servingMultiplier;
+                    totals.carbs += item.nutrients.carbohydrates * servingMultiplier;
+                    totals.fat += item.nutrients.fat * servingMultiplier;
+                    return totals;
+                }, { totalCalories: 0, protein: 0, carbs: 0, fat: 0 });
+
+                return { ...meal, items: updatedItems, ...newTotals };
+            }
+            return meal;
+        }))
+    }
+
+    return (
+        <>
+            <FoodSearchDialog
+                open={isSearchOpen}
+                onOpenChange={setIsSearchOpen}
+                onFoodSelected={addFoodToMeal}
+            />
+            <Card className="glass-card">
+                <CardHeader>
+                    <div className="flex flex-wrap justify-between items-start gap-4">
+                        <div className="flex-grow">
+                            <CardTitle>Calendário do Dia</CardTitle>
+                            <CardDescription>Adicione e organize as suas refeições para o dia selecionado.</CardDescription>
+                        </div>
+                        <div className="flex flex-wrap items-center gap-2">
+                            <Button variant="outline" onClick={addMealCategory}>
+                                <PlusCircle className="mr-2 h-4 w-4" />
+                                Adicionar Calendário
+                            </Button>
+                            
+                            <Select defaultValue="descanso">
+                                <SelectTrigger className="w-full sm:w-[180px]">
+                                    <SelectValue placeholder="Selecione a variação" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {variations.map(v => (
+                                        <SelectItem key={v.id} value={v.id}>{v.label}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" size="icon">
+                                        <MoreVertical className="h-4 w-4" />
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                    <DropdownMenuItem>Editar Variações</DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => setMeals([])}>Limpar Calendários</DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        </div>
                     </div>
-                </div>
-            </CardHeader>
-            <CardContent>
-                {meals.length === 0 ? (
-                    <div className="text-center text-muted-foreground py-20 border-2 border-dashed border-muted-foreground/20 rounded-lg flex flex-col items-center justify-center">
-                        <Utensils className="mx-auto h-12 w-12 text-muted-foreground/50" />
-                        <h3 className="mt-4 text-lg font-semibold">O seu dia está vazio</h3>
-                        <p className="mt-2 text-sm max-w-sm">Adicione um "calendário" como "Pequeno-almoço" para começar a organizar as suas refeições.</p>
-                    </div>
-                ) : (
-                    <Accordion type="multiple" defaultValue={meals.map(m => m.id)} className="space-y-4">
-                        <AnimatePresence>
-                            {meals.map((meal) => (
-                                <motion.div
-                                    key={meal.id}
-                                    initial={{ opacity: 0, y: -20 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    exit={{ opacity: 0, x: -50 }}
-                                    transition={{ duration: 0.3, ease: 'easeOut' }}
-                                >
-                                    <AccordionItem value={meal.id} className="border-b-0">
-                                        <Card className="bg-muted/30">
-                                            <AccordionTrigger className="p-4 text-lg font-semibold hover:no-underline">
-                                                <div className="flex items-center gap-4 flex-1">
-                                                    <Grape className="w-6 h-6 text-primary" />
-                                                    <span className="truncate">{meal.name}</span>
-                                                </div>
-                                                <div className="flex items-center gap-3 text-sm text-muted-foreground pr-2">
-                                                    <MacroBadge Icon={Flame} value={meal.totalCalories} unit="kcal" className="text-foreground font-semibold" />
-                                                    <MacroBadge Icon={Fish} value={meal.protein} unit="g" className="text-chart-1" />
-                                                    <MacroBadge Icon={Wheat} value={meal.carbs} unit="g" className="text-chart-2" />
-                                                    <MacroBadge Icon={Droplet} value={meal.fat} unit="g" className="text-chart-3" />
-                                                </div>
-                                            </AccordionTrigger>
-                                            <AccordionContent className="px-4 pb-4">
-                                                <div className="border-t border-muted-foreground/20 pt-4 space-y-4">
-                                                    {meal.items.length === 0 ? (
-                                                        <div className="text-center text-sm text-muted-foreground py-4">
-                                                            <p>Este calendário está vazio.</p>
-                                                            <Button variant="link" className="mt-2">
+                </CardHeader>
+                <CardContent>
+                    {meals.length === 0 ? (
+                        <div className="text-center text-muted-foreground py-20 border-2 border-dashed border-muted-foreground/20 rounded-lg flex flex-col items-center justify-center">
+                            <Utensils className="mx-auto h-12 w-12 text-muted-foreground/50" />
+                            <h3 className="mt-4 text-lg font-semibold">O seu dia está vazio</h3>
+                            <p className="mt-2 text-sm max-w-sm">Adicione um "calendário" como "Pequeno-almoço" para começar a organizar as suas refeições.</p>
+                        </div>
+                    ) : (
+                        <Accordion type="multiple" defaultValue={meals.map(m => m.id)} className="space-y-4">
+                            <AnimatePresence>
+                                {meals.map((meal) => (
+                                    <motion.div
+                                        key={meal.id}
+                                        initial={{ opacity: 0, y: -20 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        exit={{ opacity: 0, x: -50 }}
+                                        transition={{ duration: 0.3, ease: 'easeOut' }}
+                                    >
+                                        <AccordionItem value={meal.id} className="border-b-0">
+                                            <Card className="bg-muted/30">
+                                                <AccordionTrigger className="p-4 text-lg font-semibold hover:no-underline">
+                                                    <div className="flex items-center gap-4 flex-1">
+                                                        <Grape className="w-6 h-6 text-primary" />
+                                                        <span className="truncate">{meal.name}</span>
+                                                    </div>
+                                                    <div className="flex items-center gap-3 text-sm text-muted-foreground pr-2">
+                                                        <MacroBadge Icon={Flame} value={meal.totalCalories} unit="kcal" className="text-foreground font-semibold" />
+                                                        <MacroBadge Icon={Fish} value={meal.protein} unit="g" className="text-chart-1" />
+                                                        <MacroBadge Icon={Wheat} value={meal.carbs} unit="g" className="text-chart-2" />
+                                                        <MacroBadge Icon={Droplet} value={meal.fat} unit="g" className="text-chart-3" />
+                                                    </div>
+                                                </AccordionTrigger>
+                                                <AccordionContent className="px-4 pb-4">
+                                                    <div className="border-t border-muted-foreground/20 pt-4 space-y-4">
+                                                        <div className="space-y-2">
+                                                            {meal.items.map(item => (
+                                                                <FoodItem key={item.id} item={item} onRemove={() => removeFoodFromMeal(meal.id, item.id)} />
+                                                            ))}
+                                                        </div>
+                                                        {meal.items.length === 0 ? (
+                                                            <div className="text-center text-sm text-muted-foreground py-4">
+                                                                <p>Este calendário está vazio.</p>
+                                                                <Button variant="link" className="mt-2" onClick={() => openFoodSearch(meal.id)}>
+                                                                    <PlusCircle className="mr-2 h-4 w-4" />
+                                                                    Adicionar Alimento
+                                                                </Button>
+                                                            </div>
+                                                        ) : (
+                                                            <Button variant="outline" className="w-full" onClick={() => openFoodSearch(meal.id)}>
                                                                 <PlusCircle className="mr-2 h-4 w-4" />
                                                                 Adicionar Alimento
                                                             </Button>
-                                                        </div>
-                                                    ) : (
-                                                        <div>{/* List of foods will go here */}</div>
-                                                    )}
-                                                     <MealNoteEditor note={meal.note} onSave={(newNote) => handleSaveNote(meal.id, newNote)} />
-                                                </div>
-                                            </AccordionContent>
-                                        </Card>
-                                    </AccordionItem>
-                                </motion.div>
-                            ))}
-                        </AnimatePresence>
-                    </Accordion>
-                )}
-            </CardContent>
-        </Card>
+                                                        )}
+                                                        <MealNoteEditor note={meal.note} onSave={(newNote) => handleSaveNote(meal.id, newNote)} />
+                                                    </div>
+                                                </AccordionContent>
+                                            </Card>
+                                        </AccordionItem>
+                                    </motion.div>
+                                ))}
+                            </AnimatePresence>
+                        </Accordion>
+                    )}
+                </CardContent>
+            </Card>
+        </>
     )
 }
