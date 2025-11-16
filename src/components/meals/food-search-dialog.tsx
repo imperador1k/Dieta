@@ -1,18 +1,19 @@
 
 'use client';
 
-import { useState, useTransition, useCallback, useEffect } from 'react';
+import React, { useState, useTransition, useCallback, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { getFoodDetails, searchFood } from '@/app/log/actions';
-import type { FoodSearchResult } from '@/services/usda';
+import type { FoodSearchResult, FoodDetails } from '@/services/usda';
 import type { FoodItemData } from '@/lib/types';
 import { Loader2, Plus, PlusCircle, Scale, Utensils, Flame, Fish, Wheat, Droplet } from 'lucide-react';
 import { ScrollArea } from '../ui/scroll-area';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useDebounce } from '@/hooks/use-debounce';
-import { Badge } from '../ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Label } from '../ui/label';
 
 
 const SearchResultItem = ({
@@ -68,7 +69,7 @@ const AddFoodDetails = ({
     onAdd,
     onBack,
 }: {
-    food: FoodSearchResult,
+    food: FoodDetails,
     onAdd: (food: FoodItemData) => void,
     onBack: () => void,
 }) => {
@@ -90,9 +91,13 @@ const AddFoodDetails = ({
         onAdd(foodToAdd);
     };
 
+    const handlePortionChange = (portionGramWeight: string) => {
+        setServingSize(Number(portionGramWeight));
+    }
+
     return (
         <motion.div 
-            className="p-1 space-y-4"
+            className="p-1 space-y-6"
             key="details"
             initial={{ opacity: 0, x: 50 }}
             animate={{ opacity: 1, x: 0 }}
@@ -103,16 +108,41 @@ const AddFoodDetails = ({
                 <h3 className="font-semibold capitalize text-lg">{food.description.toLowerCase()}</h3>
                 <p className="text-sm text-muted-foreground">Ajuste a porção e adicione à sua refeição.</p>
             </div>
-            <div className="flex items-center gap-2">
-                <Scale className="w-5 h-5 text-muted-foreground" />
-                <Input
-                    type="number"
-                    value={servingSize}
-                    onChange={e => setServingSize(Number(e.target.value))}
-                    className="w-24 bg-background/80"
-                />
-                <span className="text-muted-foreground">gramas</span>
+
+            <div className='space-y-4'>
+                {food.portions && food.portions.length > 0 && (
+                    <div className="space-y-2">
+                        <Label htmlFor="portions">Porções Comuns</Label>
+                        <Select onValueChange={handlePortionChange}>
+                            <SelectTrigger id="portions">
+                                <SelectValue placeholder="Selecionar porção" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {food.portions.map(p => (
+                                    <SelectItem key={p.id} value={String(p.gramWeight)}>
+                                        {p.portionDescription} ({p.gramWeight}g)
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                )}
+                <div className="space-y-2">
+                    <Label htmlFor="serving-size">Peso (em gramas)</Label>
+                    <div className="flex items-center gap-2">
+                        <Scale className="w-5 h-5 text-muted-foreground" />
+                        <Input
+                            id='serving-size'
+                            type="number"
+                            value={servingSize}
+                            onChange={e => setServingSize(Number(e.target.value))}
+                            className="w-full bg-background/80"
+                        />
+                        <span className="text-muted-foreground">g</span>
+                    </div>
+                </div>
             </div>
+
             
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
                 <div className="p-3 bg-muted/50 rounded-lg">
@@ -164,15 +194,17 @@ export function FoodSearchDialog({
     const [query, setQuery] = useState('');
     const debouncedQuery = useDebounce(query, 300);
     const [results, setResults] = useState<FoodSearchResult[]>([]);
-    const [isPending, startTransition] = useTransition();
-    const [selectedFood, setSelectedFood] = useState<FoodSearchResult | null>(null);
+    const [isSearching, startSearchTransition] = useTransition();
+    const [isLoadingDetails, startDetailsTransition] = useTransition();
+
+    const [selectedFood, setSelectedFood] = useState<FoodDetails | null>(null);
 
     const handleSearch = useCallback((searchTerm: string) => {
         if (searchTerm.trim().length < 2) {
             setResults([]);
             return;
         }
-        startTransition(async () => {
+        startSearchTransition(async () => {
             const foodResults = await searchFood(searchTerm);
             setResults(foodResults);
         });
@@ -181,6 +213,15 @@ export function FoodSearchDialog({
     useEffect(() => {
         handleSearch(debouncedQuery);
     }, [debouncedQuery, handleSearch]);
+
+    const handleSelectResult = (result: FoodSearchResult) => {
+        startDetailsTransition(async () => {
+            const details = await getFoodDetails(result.fdcId);
+            if(details) {
+                setSelectedFood(details);
+            }
+        });
+    }
 
     const handleAddFood = (food: FoodItemData) => {
         onFoodSelected(food);
@@ -201,6 +242,8 @@ export function FoodSearchDialog({
             onOpenChange(true);
         }
     }
+
+    const isPending = isSearching || isLoadingDetails;
 
     return (
         <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -253,7 +296,7 @@ export function FoodSearchDialog({
                                                 <SearchResultItem
                                                     key={result.fdcId}
                                                     result={result}
-                                                    onSelect={setSelectedFood}
+                                                    onSelect={handleSelectResult}
                                                 />
                                             ))}
                                         </AnimatePresence>

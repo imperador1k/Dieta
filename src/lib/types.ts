@@ -8,3 +8,9 @@ export type FoodItemData = {
     servingSize: number; // in grams
     nutrients: FoodDetails['nutrients'];
 };
+
+export type FoodPortion = {
+    id: number;
+    gramWeight: number;
+    portionDescription: string;
+}

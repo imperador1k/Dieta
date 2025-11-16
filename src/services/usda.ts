@@ -1,5 +1,7 @@
 // src/services/usda.ts
 
+import type { FoodPortion } from "@/lib/types";
+
 const USDA_API_KEY = process.env.USDA_API_KEY;
 const USDA_API_URL = "https://api.nal.usda.gov/fdc/v1";
 
@@ -24,13 +26,14 @@ export interface FoodDetails {
     fat: number;
     carbohydrates: number;
   };
+  portions?: FoodPortion[];
 }
 
 const getNutrientValue = (foodNutrients: any[], nutrientId: number) => {
     const nutrient = foodNutrients.find(
-      (n: any) => n.nutrientId === nutrientId
+      (n: any) => n.nutrientId === nutrientId || n.nutrient?.id === nutrientId
     );
-    return nutrient ? nutrient.value : 0;
+    return nutrient ? (nutrient.value ?? nutrient.amount ?? 0) : 0;
 };
 
 export async function searchFoodsUsda(query: string): Promise<FoodSearchResult[]> {
@@ -83,21 +86,21 @@ export async function getFoodDetailsUsda(fdcId: number): Promise<FoodDetails | n
 
   const data = await response.json();
   
-  const getNutrient = (nutrientId: number) => {
-    const nutrient = data.foodNutrients.find(
-      (n: any) => n.nutrient.id === nutrientId
-    );
-    return nutrient ? nutrient.amount : 0;
-  };
+  const portions = data.foodPortions?.map((p: any) => ({
+      id: p.id,
+      gramWeight: p.gramWeight,
+      portionDescription: p.portionDescription || `${p.amount} ${p.modifier}`
+  })) || [];
 
   return {
     fdcId: data.fdcId,
     description: data.description,
     nutrients: {
-      calories: getNutrient(1008),
-      protein: getNutrient(1003),
-      fat: getNutrient(1004),
-      carbohydrates: getNutrient(1005),
+      calories: getNutrientValue(data.foodNutrients, 1008),
+      protein: getNutrientValue(data.foodNutrients, 1003),
+      fat: getNutrientValue(data.foodNutrients, 1004),
+      carbohydrates: getNutrientValue(data.foodNutrients, 1005),
     },
+    portions: portions,
   };
 }
