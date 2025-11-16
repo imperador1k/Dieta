@@ -89,6 +89,8 @@ export default function MealCategoriesWidget() {
     const [meals, setMeals] = useState<Meal[]>(initialMeals);
     const [isSearchOpen, setIsSearchOpen] = useState(false);
     const [activeMealId, setActiveMealId] = useState<string | null>(null);
+    const [foodToEdit, setFoodToEdit] = useState<FoodItemData | null>(null);
+
 
     const addMealCategory = () => {
         const newMeal: Meal = {
@@ -110,15 +112,33 @@ export default function MealCategoriesWidget() {
 
     const openFoodSearch = (mealId: string) => {
         setActiveMealId(mealId);
+        setFoodToEdit(null);
         setIsSearchOpen(true);
     };
 
-    const addFoodToMeal = (food: FoodItemData) => {
+    const openFoodEditor = (mealId: string, food: FoodItemData) => {
+        setActiveMealId(mealId);
+        setFoodToEdit(food);
+        setIsSearchOpen(true);
+    }
+
+    const confirmFoodInMeal = (foodData: FoodItemData) => {
         if (!activeMealId) return;
 
         setMeals(meals.map(meal => {
             if (meal.id === activeMealId) {
-                const updatedItems = [...meal.items, food];
+                const existingItemIndex = meal.items.findIndex(item => item.id === foodData.id);
+                
+                let updatedItems;
+                if (existingItemIndex > -1) {
+                    // Update existing item
+                    updatedItems = [...meal.items];
+                    updatedItems[existingItemIndex] = foodData;
+                } else {
+                    // Add new item
+                    updatedItems = [...meal.items, foodData];
+                }
+
                 const newTotals = updatedItems.reduce((totals, item) => {
                     const servingMultiplier = item.servingSize / 100;
                     totals.totalCalories += item.nutrients.calories * servingMultiplier;
@@ -158,7 +178,8 @@ export default function MealCategoriesWidget() {
             <FoodSearchDialog
                 open={isSearchOpen}
                 onOpenChange={setIsSearchOpen}
-                onFoodSelected={addFoodToMeal}
+                onFoodConfirm={confirmFoodInMeal}
+                foodToEdit={foodToEdit}
             />
             <Card className="glass-card">
                 <CardHeader>
@@ -234,7 +255,12 @@ export default function MealCategoriesWidget() {
                                                     <div className="border-t border-muted-foreground/20 pt-4 space-y-4">
                                                         <div className="space-y-2">
                                                             {meal.items.map(item => (
-                                                                <FoodItem key={item.id} item={item} onRemove={() => removeFoodFromMeal(meal.id, item.id)} />
+                                                                <FoodItem 
+                                                                    key={item.id} 
+                                                                    item={item} 
+                                                                    onRemove={() => removeFoodFromMeal(meal.id, item.id)}
+                                                                    onEdit={() => openFoodEditor(meal.id, item)}
+                                                                />
                                                             ))}
                                                         </div>
                                                         {meal.items.length === 0 ? (

@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { getFoodDetails, searchFood } from '@/app/log/actions';
 import type { FoodSearchResult, FoodDetails } from '@/services/usda';
 import type { FoodItemData } from '@/lib/types';
-import { Loader2, Plus, PlusCircle, Scale, Utensils, Flame, Fish, Wheat, Droplet } from 'lucide-react';
+import { Loader2, Plus, PlusCircle, Scale, Utensils, Flame, Fish, Wheat, Droplet, Pencil } from 'lucide-react';
 import { ScrollArea } from '../ui/scroll-area';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useDebounce } from '@/hooks/use-debounce';
@@ -64,36 +64,40 @@ const SearchResultItem = ({
     </motion.div>
 );
 
-const AddFoodDetails = ({
+const AddOrEditFoodDetails = ({
     food,
-    onAdd,
+    onConfirm,
     onBack,
+    isEditing
 }: {
-    food: FoodDetails,
-    onAdd: (food: FoodItemData) => void,
+    food: FoodItemData | FoodDetails,
+    onConfirm: (food: FoodItemData) => void,
     onBack: () => void,
+    isEditing: boolean
 }) => {
-    const [servingSize, setServingSize] = useState(100);
-    const [isAdding, setIsAdding] = useState(false);
+    const [servingSize, setServingSize] = useState('servingSize' in food ? food.servingSize : 100);
+    const [isSubmitting, setIsSubmitting] = useState(false);
     
     const servingMultiplier = servingSize / 100;
     const { nutrients } = food;
 
-    const handleAdd = () => {
-        setIsAdding(true);
-        const foodToAdd: FoodItemData = {
-            id: `${food.fdcId}-${Date.now()}`,
+    const handleConfirm = () => {
+        setIsSubmitting(true);
+        const foodToConfirm: FoodItemData = {
+            id: 'id' in food ? food.id : `${food.fdcId}-${Date.now()}`,
             fdcId: food.fdcId,
             description: food.description,
             servingSize: servingSize,
             nutrients: nutrients,
         };
-        onAdd(foodToAdd);
+        onConfirm(foodToConfirm);
     };
 
     const handlePortionChange = (portionGramWeight: string) => {
         setServingSize(Number(portionGramWeight));
     }
+
+    const portions = 'portions' in food ? food.portions : [];
 
     return (
         <motion.div 
@@ -106,19 +110,19 @@ const AddFoodDetails = ({
         >
              <div>
                 <h3 className="font-semibold capitalize text-lg">{food.description.toLowerCase()}</h3>
-                <p className="text-sm text-muted-foreground">Ajuste a porção e adicione à sua refeição.</p>
+                <p className="text-sm text-muted-foreground">Ajuste a porção e {isEditing ? 'atualize' : 'adicione'} o alimento.</p>
             </div>
 
             <div className='space-y-4'>
-                {food.portions && food.portions.length > 0 && (
+                {portions && portions.length > 0 && (
                     <div className="space-y-2">
                         <Label htmlFor="portions">Porções Comuns</Label>
-                        <Select onValueChange={handlePortionChange}>
+                        <Select onValueChange={handlePortionChange} defaultValue={String(servingSize)}>
                             <SelectTrigger id="portions">
                                 <SelectValue placeholder="Selecionar porção" />
                             </SelectTrigger>
                             <SelectContent>
-                                {food.portions.map(p => (
+                                {portions.map(p => (
                                     <SelectItem key={p.id} value={String(p.gramWeight)}>
                                         {p.portionDescription} ({p.gramWeight}g)
                                     </SelectItem>
@@ -172,10 +176,15 @@ const AddFoodDetails = ({
             </div>
 
             <DialogFooter className='!mt-6 !flex-row'>
-                <Button variant="ghost" onClick={onBack}>Voltar</Button>
-                <Button onClick={handleAdd} disabled={isAdding} className="flex-1">
-                    {isAdding ? <Loader2 className="animate-spin" /> : <Plus className="mr-2"/>}
-                    Adicionar à Refeição
+                {!isEditing && <Button variant="ghost" onClick={onBack}>Voltar</Button>}
+                <Button onClick={handleConfirm} disabled={isSubmitting} className="flex-1">
+                    {isSubmitting ? (
+                        <Loader2 className="animate-spin" /> 
+                    ) : isEditing ? (
+                        <><Pencil className="mr-2"/> Atualizar Alimento</>
+                    ) : (
+                        <><Plus className="mr-2"/> Adicionar à Refeição</>
+                    )}
                 </Button>
             </DialogFooter>
         </motion.div>
@@ -185,11 +194,13 @@ const AddFoodDetails = ({
 export function FoodSearchDialog({
     open,
     onOpenChange,
-    onFoodSelected,
+    onFoodConfirm,
+    foodToEdit
 }: {
     open: boolean;
     onOpenChange: (open: boolean) => void;
-    onFoodSelected: (food: FoodItemData) => void;
+    onFoodConfirm: (food: FoodItemData) => void;
+    foodToEdit?: FoodItemData | null;
 }) {
     const [query, setQuery] = useState('');
     const debouncedQuery = useDebounce(query, 300);
@@ -198,6 +209,18 @@ export function FoodSearchDialog({
     const [isLoadingDetails, startDetailsTransition] = useTransition();
 
     const [selectedFood, setSelectedFood] = useState<FoodDetails | null>(null);
+    const [editingFood, setEditingFood] = useState<FoodItemData | null>(null);
+
+    const isEditing = !!editingFood;
+
+    useEffect(() => {
+        if (open && foodToEdit) {
+            setEditingFood(foodToEdit);
+        } else {
+            setEditingFood(null);
+        }
+    }, [open, foodToEdit]);
+
 
     const handleSearch = useCallback((searchTerm: string) => {
         if (searchTerm.trim().length < 2) {
@@ -211,8 +234,10 @@ export function FoodSearchDialog({
     }, []);
 
     useEffect(() => {
-        handleSearch(debouncedQuery);
-    }, [debouncedQuery, handleSearch]);
+        if (!isEditing) {
+            handleSearch(debouncedQuery);
+        }
+    }, [debouncedQuery, handleSearch, isEditing]);
 
     const handleSelectResult = (result: FoodSearchResult) => {
         startDetailsTransition(async () => {
@@ -223,8 +248,8 @@ export function FoodSearchDialog({
         });
     }
 
-    const handleAddFood = (food: FoodItemData) => {
-        onFoodSelected(food);
+    const handleConfirmFood = (food: FoodItemData) => {
+        onFoodConfirm(food);
         resetAndClose();
     };
     
@@ -232,6 +257,7 @@ export function FoodSearchDialog({
         setQuery('');
         setResults([]);
         setSelectedFood(null);
+        setEditingFood(null);
         onOpenChange(false);
     }
     
@@ -245,23 +271,27 @@ export function FoodSearchDialog({
 
     const isPending = isSearching || isLoadingDetails;
 
+    const currentView = editingFood ? 'details' : selectedFood ? 'details' : 'search';
+    const foodForDetails = editingFood || selectedFood;
+
     return (
         <Dialog open={open} onOpenChange={handleOpenChange}>
             <DialogContent className="sm:max-w-lg">
                 <DialogHeader>
-                    <DialogTitle>Adicionar Alimento</DialogTitle>
+                    <DialogTitle>{isEditing ? 'Editar Alimento' : 'Adicionar Alimento'}</DialogTitle>
                      <DialogDescription>
-                        {selectedFood ? 'Confirme a porção do alimento.' : 'Procure um alimento para adicionar à sua refeição.'}
+                        {currentView === 'details' ? 'Confirme a porção do alimento.' : 'Procure um alimento para adicionar à sua refeição.'}
                     </DialogDescription>
                 </DialogHeader>
 
                 <AnimatePresence mode="wait">
-                    {selectedFood ? (
-                        <AddFoodDetails
+                    {currentView === 'details' && foodForDetails ? (
+                        <AddOrEditFoodDetails
                             key="details"
-                            food={selectedFood}
-                            onAdd={handleAddFood}
+                            food={foodForDetails}
+                            onConfirm={handleConfirmFood}
                             onBack={() => setSelectedFood(null)}
+                            isEditing={isEditing}
                         />
                     ) : (
                         <motion.div
