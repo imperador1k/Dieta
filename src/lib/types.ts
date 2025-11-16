@@ -75,6 +75,7 @@ export interface BodyMeasurement {
 export interface UserProfile {
     name: string;
     email: string;
+    avatarUrl?: string;
     age: number;
     height: number; // in cm
     weight: number; // in kg

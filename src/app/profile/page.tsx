@@ -7,8 +7,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Save, UserCircle, Ruler, Beef } from "lucide-react";
+import { Save, Ruler, Beef } from "lucide-react";
 import type { UserProfile } from "@/lib/types";
+import { AvatarUploader } from "@/components/profile/avatar-uploader";
 
 // Mock data, in a real app this would come from a user session/database
 const initialProfile: UserProfile = {
@@ -21,7 +22,8 @@ const initialProfile: UserProfile = {
     measurements: {
         neck: 38,
         waist: 85,
-    }
+    },
+    avatarUrl: 'https://github.com/shadcn.png'
 }
 
 export default function ProfilePage() {
@@ -46,6 +48,10 @@ export default function ProfilePage() {
     const handleGenderChange = (value: 'male' | 'female') => {
          setProfile(prev => ({ ...prev, gender: value }));
     }
+    
+    const handleAvatarChange = (newAvatarUrl: string) => {
+        setProfile(prev => ({ ...prev, avatarUrl: newAvatarUrl }));
+    }
 
     return (
         <AppShell>
@@ -57,23 +63,14 @@ export default function ProfilePage() {
                     </p>
                 </header>
 
-                <Card className="glass-card">
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2"><UserCircle/> Dados Pessoais</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        <div className="grid sm:grid-cols-2 gap-4">
-                            <div className="space-y-1">
-                                <Label htmlFor="name">Nome</Label>
-                                <Input id="name" name="name" value={profile.name} onChange={handleInputChange} />
-                            </div>
-                            <div className="space-y-1">
-                                <Label htmlFor="email">Email</Label>
-                                <Input id="email" name="email" type="email" value={profile.email} onChange={handleInputChange} />
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
+                <AvatarUploader 
+                    name={profile.name}
+                    email={profile.email}
+                    avatarUrl={profile.avatarUrl}
+                    onAvatarChange={handleAvatarChange}
+                    onNameChange={(name) => setProfile(p => ({...p, name}))}
+                    onEmailChange={(email) => setProfile(p => ({...p, email}))}
+                />
 
                 <Card className="glass-card">
                     <CardHeader>
