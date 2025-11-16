@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useTransition, useCallback } from 'react';
+import { useState, useTransition, useCallback, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -57,7 +57,7 @@ const AddFoodDetails = ({
     const [isAdding, setIsAdding] = useState(false);
     const [details, setDetails] = useState<Awaited<ReturnType<typeof getFoodDetails>>>(null);
 
-    React.useEffect(() => {
+    useEffect(() => {
         getFoodDetails(food.fdcId).then(setDetails);
     }, [food.fdcId]);
 
@@ -166,7 +166,7 @@ export function FoodSearchDialog({
         });
     }, []);
 
-    React.useEffect(() => {
+    useEffect(() => {
         handleSearch(debouncedQuery);
     }, [debouncedQuery, handleSearch]);
 
