@@ -1,3 +1,40 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "evo-1",
+      "description": "First progress picture",
+      "imageUrl": "https://images.unsplash.com/photo-1609860862165-b851ee66977e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxwZXJzb24lMjBmaXRuZXNzfGVufDB8fHx8MTc2MzIyMDY1OXww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "person fitness"
+    },
+    {
+      "id": "evo-2",
+      "description": "Second progress picture",
+      "imageUrl": "https://images.unsplash.com/photo-1751456357820-c2030c293c71?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxwZXJzb24lMjBneW18ZW58MHx8fHwxNzYzMTkwNjA5fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "person gym"
+    },
+    {
+      "id": "evo-3",
+      "description": "Third progress picture",
+      "imageUrl": "https://images.unsplash.com/photo-1715333149800-b61919b4babc?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxwZXJzb24lMjB3b3Jrb3V0fGVufDB8fHx8MTc2MzI4MTc1MXww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "person workout"
+    },
+    {
+      "id": "evo-4",
+      "description": "Fourth progress picture",
+      "imageUrl": "https://images.unsplash.com/photo-1738523686578-f18348c8292b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxmaXRuZXNzJTIwcHJvZ3Jlc3N8ZW58MHx8fHwxNzYzMjUzNDg1fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "fitness progress"
+    },
+    {
+      "id": "evo-5",
+      "description": "Fifth progress picture",
+      "imageUrl": "https://images.unsplash.com/photo-1761604751301-85f73eeec968?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxib2R5JTIwdHJhbnNmb3JtYXRpb258ZW58MHx8fHwxNzYzMjgxNzUwfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "body transformation"
+    },
+    {
+      "id": "evo-6",
+      "description": "Sixth progress picture",
+      "imageUrl": "https://images.unsplash.com/photo-1543362906-acfc16c67564?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxoZWFsdGh5JTIwbGlmZXN0eWxlfGVufDB8fHx8MTc2MzIwOTU4NXww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "healthy lifestyle"
+    }
+  ]
 }
