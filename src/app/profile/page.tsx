@@ -1,6 +1,6 @@
+
 'use client';
 
-import { useState } from "react";
 import { AppShell } from "@/components/layout/app-shell";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,33 +8,31 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Save, Ruler } from "lucide-react";
-import type { UserProfile } from "@/lib/types";
 import { AvatarUploader } from "@/components/profile/avatar-uploader";
-
-// Mock data, in a real app this would come from a user session/database
-const initialProfile: UserProfile = {
-    name: 'Utilizador DietaS',
-    email: 'user@dietas.app',
-    age: 30,
-    height: 180,
-    gender: 'male',
-    avatarUrl: 'https://github.com/shadcn.png'
-}
+import { useAppContext } from "@/app/context/AppContext";
 
 export default function ProfilePage() {
-    const [profile, setProfile] = useState(initialProfile);
+    const { profile, setProfile } = useAppContext();
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
-        setProfile(prev => ({ ...prev, [name]: value }));
+        // Convert to number if the field is age or height
+        const isNumeric = ['age', 'height'].includes(name);
+        setProfile({ ...profile, [name]: isNumeric ? (value ? parseFloat(value) : 0) : value });
     }
 
     const handleGenderChange = (value: 'male' | 'female') => {
-         setProfile(prev => ({ ...prev, gender: value }));
+         setProfile({ ...profile, gender: value });
     }
     
     const handleAvatarChange = (newAvatarUrl: string) => {
-        setProfile(prev => ({ ...prev, avatarUrl: newAvatarUrl }));
+        setProfile({ ...profile, avatarUrl: newAvatarUrl });
+    }
+
+    // In a real app, this would likely trigger a database save.
+    const handleSaveChanges = () => {
+        console.log("Saving profile:", profile);
+        // Here you would call an action to save the profile to a database.
     }
 
     return (
@@ -52,8 +50,8 @@ export default function ProfilePage() {
                     email={profile.email}
                     avatarUrl={profile.avatarUrl}
                     onAvatarChange={handleAvatarChange}
-                    onNameChange={(name) => setProfile(p => ({...p, name}))}
-                    onEmailChange={(email) => setProfile(p => ({...p, email}))}
+                    onNameChange={(name) => setProfile({...profile, name})}
+                    onEmailChange={(email) => setProfile({...profile, email})}
                 />
 
                 <Card className="glass-card">
@@ -87,7 +85,7 @@ export default function ProfilePage() {
                 </Card>
 
                 <div className="flex justify-end">
-                    <Button><Save className="mr-2"/> Guardar Alterações</Button>
+                    <Button onClick={handleSaveChanges}><Save className="mr-2"/> Guardar Alterações</Button>
                 </div>
             </div>
         </AppShell>

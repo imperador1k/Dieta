@@ -1,3 +1,4 @@
+
 'use client';
 
 import { AppShell } from "@/components/layout/app-shell";
@@ -6,58 +7,30 @@ import { Button } from "@/components/ui/button";
 import { PlusCircle, History } from "lucide-react";
 import { useState } from "react";
 import { MeasurementForm } from "@/components/profile/measurement-form";
-import type { BodyMeasurement, UserProfile } from "@/lib/types";
 import MeasurementHistory from "@/components/progress/measurement-history";
 import { Separator } from "@/components/ui/separator";
-
-// Mock data, in a real app this would be fetched
-const mockInitialMeasurements: BodyMeasurement[] = [
-    { date: "2024-01-15", weight: 80, neck: 40, waist: 90, hips: 100 },
-    { date: "2024-02-15", weight: 78.5, neck: 39.5, waist: 88, hips: 98 },
-    { date: "2024-03-15", weight: 77, neck: 39, waist: 86, hips: 96 },
-    { date: "2024-05-01", weight: 75.5, neck: 38, waist: 85, hips: 95 },
-];
-
-// Mock user profile for calculation purposes
-const mockUserProfile: Pick<UserProfile, 'height' | 'gender'> = {
-    height: 180, // in cm
-    gender: 'male',
-};
-
+import { useAppContext } from "@/app/context/AppContext";
 
 export default function ProgressPage() {
+    const { profile, measurements, saveMeasurement } = useAppContext();
     const [isFormOpen, setIsFormOpen] = useState(false);
-    const [measurements, setMeasurements] = useState<BodyMeasurement[]>(mockInitialMeasurements);
 
-    const handleSaveMeasurement = (measurement: BodyMeasurement) => {
-        // Add or update measurement based on date
-        const existingIndex = measurements.findIndex(m => new Date(m.date).toDateString() === new Date(measurement.date).toDateString());
-        
-        let newMeasurements;
-        if (existingIndex > -1) {
-            newMeasurements = [...measurements];
-            newMeasurements[existingIndex] = measurement;
-        } else {
-            newMeasurements = [...measurements, measurement];
-        }
-        
-        // Sort measurements by date
-        newMeasurements.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-        
-        setMeasurements(newMeasurements);
+    const handleSave = (measurement: any) => {
+        saveMeasurement(measurement);
         setIsFormOpen(false);
     }
     
     const latestMeasurement = measurements.length > 0 ? measurements[measurements.length - 1] : null;
+    const userProfileForCalculations = { height: profile.height, gender: profile.gender };
 
     return (
         <AppShell>
             <MeasurementForm 
                 open={isFormOpen}
                 onOpenChange={setIsFormOpen}
-                onSave={handleSaveMeasurement}
+                onSave={handleSave}
                 latestMeasurement={latestMeasurement}
-                userProfile={mockUserProfile}
+                userProfile={userProfileForCalculations}
             />
             <div className="space-y-8">
                 <header className="flex flex-wrap items-center justify-between gap-4">
@@ -84,7 +57,7 @@ export default function ProgressPage() {
                         <History />
                         Histórico de Medições
                     </h2>
-                    <MeasurementHistory measurements={measurements} />
+                    <MeasurementHistory measurements={measurements} userProfile={userProfileForCalculations} />
                 </div>
             </div>
         </AppShell>

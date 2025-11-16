@@ -1,26 +1,16 @@
+
 'use client';
 
 import { useState, useRef, ChangeEvent } from 'react';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
 import type { EvolutionPhoto } from '@/lib/types';
 import GalleryHeader from '@/components/gallery/gallery-header';
 import GalleryGrid from '@/components/gallery/gallery-grid';
 import PhotoView from '@/components/gallery/photo-view';
 import { useToast } from '@/hooks/use-toast';
-
-const initialPhotos: EvolutionPhoto[] = PlaceHolderImages.map((p, index) => ({
-  id: p.id,
-  date: new Date(2024, 4, 15 + index * 5).toISOString(),
-  imageUrl: p.imageUrl,
-  imageHint: p.imageHint,
-  weight: 80 - index * 0.5,
-  width: 1080,
-  height: 1350,
-}));
-
+import { useAppContext } from '@/app/context/AppContext';
 
 export default function GalleryPage() {
-  const [photos, setPhotos] = useState<EvolutionPhoto[]>(initialPhotos);
+  const { photos, setPhotos } = useAppContext();
   const [selectedPhoto, setSelectedPhoto] = useState<EvolutionPhoto | null>(null);
 
   const { toast } = useToast();
@@ -55,11 +45,11 @@ export default function GalleryPage() {
                     width: img.naturalWidth,
                     height: img.naturalHeight,
                     // In a real app, you might ask for the weight or fetch the latest one
-                    weight: photos[photos.length-1]?.weight ? photos[photos.length-1].weight! - 0.3 : 75,
+                    weight: photos[0]?.weight ? photos[0].weight! - 0.3 : 75,
                 };
                 
                 // Add to the beginning of the array
-                setPhotos(prevPhotos => [newPhoto, ...prevPhotos]);
+                setPhotos([newPhoto, ...photos]);
 
                 toast({
                   title: "Foto Adicionada!",

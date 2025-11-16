@@ -9,21 +9,15 @@ import { Input } from "@/components/ui/input";
 import { BookCopy, PlusCircle, Search } from "lucide-react";
 import { DishEditor } from "@/components/dishes/dish-editor";
 import { Dish, FoodItemData } from "@/lib/types";
+import { useAppContext } from "@/app/context/AppContext";
 
 export default function LogPage() {
-    const [dishes, setDishes] = useState<Dish[]>([]);
+    const { dishes, saveDish } = useAppContext();
     const [isEditorOpen, setIsEditorOpen] = useState(false);
     const [dishToEdit, setDishToEdit] = useState<Dish | null>(null);
 
     const handleSaveDish = (dish: Dish) => {
-        const index = dishes.findIndex(d => d.id === dish.id);
-        if (index > -1) {
-            const newDishes = [...dishes];
-            newDishes[index] = dish;
-            setDishes(newDishes);
-        } else {
-            setDishes([...dishes, dish]);
-        }
+        saveDish(dish);
         setIsEditorOpen(false);
         setDishToEdit(null);
     }

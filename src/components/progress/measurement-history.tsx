@@ -1,10 +1,11 @@
+
 'use client';
 
 import { Card } from "@/components/ui/card";
 import { BarChart3, Weight, Percent, ArrowUp, ArrowDown } from "lucide-react";
 import { format } from 'date-fns';
 import { pt } from 'date-fns/locale';
-import { BodyMeasurement } from "@/lib/types";
+import { BodyMeasurement, UserProfile } from "@/lib/types";
 import { useMemo } from "react";
 import { calculateBodyComposition } from "@/lib/body-composition";
 import { motion } from "framer-motion";
@@ -31,14 +32,17 @@ const TrendIndicator = ({ value, unit, positiveIsGood }: { value: number; unit: 
     );
 };
 
+interface MeasurementHistoryProps {
+    measurements: BodyMeasurement[];
+    userProfile: Pick<UserProfile, 'height' | 'gender'>;
+}
 
-export default function MeasurementHistory({ measurements }: { measurements: BodyMeasurement[] }) {
+export default function MeasurementHistory({ measurements, userProfile }: MeasurementHistoryProps) {
     
     const measurementsWithFat = useMemo(() => measurements.map(m => {
-        // A real implementation would get gender and height from user profile
         const composition = calculateBodyComposition({ 
-            gender: 'male', 
-            height: 180, 
+            gender: userProfile.gender, 
+            height: userProfile.height, 
             weight: m.weight, 
             neck: m.neck, 
             waist: m.waist 
@@ -48,7 +52,7 @@ export default function MeasurementHistory({ measurements }: { measurements: Bod
             ...m,
             bodyFat: composition?.bodyFatPercentage,
         }
-    }).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()), [measurements]);
+    }).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()), [measurements, userProfile]);
 
 
     if (measurements.length < 1) {
@@ -69,7 +73,7 @@ export default function MeasurementHistory({ measurements }: { measurements: Bod
         >
             {measurementsWithFat.map((m, index) => {
                 const prevMeasurement = measurementsWithFat[index + 1];
-                const weightDiff = prevMeasurement?.weight ? m.weight! - prevMeasurement.weight : 0;
+                const weightDiff = prevMeasurement?.weight && m.weight ? m.weight - prevMeasurement.weight : 0;
                 const fatDiff = prevMeasurement?.bodyFat && m.bodyFat ? m.bodyFat - prevMeasurement.bodyFat : 0;
 
                 return (

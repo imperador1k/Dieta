@@ -4,16 +4,8 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Fish, Wheat, Droplet, Flame, Check, AlertTriangle } from "lucide-react";
-import type { Meal } from '@/lib/types';
+import type { Meal, Plan } from '@/lib/types';
 import { motion } from 'framer-motion';
-
-// Mock targets, in a real app this would come from the active plan
-const planTargets = {
-    calories: 2200,
-    protein: 180,
-    carbs: 200,
-    fat: 70
-};
 
 const CalorieCircularProgress = ({
   consumed,
@@ -119,7 +111,12 @@ const TotalMacroBar = ({
     )
 }
 
-export default function VariationTotalsWidget({ meals }: { meals: Meal[] }) {
+interface VariationTotalsWidgetProps {
+    meals: Meal[];
+    planTargets: Plan['targets'];
+}
+
+export default function VariationTotalsWidget({ meals, planTargets }: VariationTotalsWidgetProps) {
 
   const totals = meals.reduce((acc, meal) => {
     acc.calories += meal.totalCalories;

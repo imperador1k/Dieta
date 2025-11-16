@@ -5,56 +5,31 @@ import { useState } from 'react';
 import { AppShell } from "@/components/layout/app-shell";
 import PlanList from '@/components/plan/plan-list';
 import PlanDetails from '@/components/plan/plan-details';
-import type { Plan, Variation } from '@/lib/types';
+import type { Plan } from '@/lib/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { FileText } from 'lucide-react';
-
-const initialPlans: Plan[] = [
-    {
-        id: 'plan-1',
-        name: 'Emagrecimento Intensivo',
-        description: 'Focado na perda de gordura, mantendo a massa muscular.',
-        isActive: true,
-        targets: { calories: 2200, protein: 180, carbs: 200, fat: 70 },
-        variations: [
-            { id: 'var-1', name: 'Dia de Treino A (Cardio)' },
-            { id: 'var-2', name: 'Dia de Treino B (Força)' },
-            { id: 'var-3', name: 'Dia de Descanso' },
-        ],
-    },
-    {
-        id: 'plan-2',
-        name: 'Manutenção Muscular',
-        description: 'Plano para manter o peso atual e a composição corporal.',
-        isActive: false,
-        targets: { calories: 2800, protein: 200, carbs: 300, fat: 90 },
-        variations: [
-             { id: 'var-4', name: 'Dia Normal' },
-        ],
-    },
-];
+import { useAppContext } from '@/app/context/AppContext';
 
 
 export default function PlanPage() {
-    const [plans, setPlans] = useState<Plan[]>(initialPlans);
-    const [selectedPlan, setSelectedPlan] = useState<Plan | null>(plans.find(p => p.isActive) ?? plans[0] ?? null);
+    const { plans, setActivePlan, updatePlanVariations } = useAppContext();
+    const activePlan = plans.find(p => p.isActive);
+    
+    // The selected plan for viewing, defaults to active plan, but can be changed
+    const [selectedPlan, setSelectedPlan] = useState<Plan | null>(activePlan ?? plans[0] ?? null);
 
-    const setActivePlan = (planId: string) => {
-        const newPlans = plans.map(p => ({ ...p, isActive: p.id === planId }));
-        setPlans(newPlans);
-        setSelectedPlan(newPlans.find(p => p.id === planId) ?? null);
-    };
-
-    const handleVariationsChange = (planId: string, newVariations: Variation[]) => {
-        const newPlans = plans.map(p => 
-            p.id === planId ? { ...p, variations: newVariations } : p
-        );
-        setPlans(newPlans);
-        // Also update the selected plan if it's the one being changed
-        if (selectedPlan?.id === planId) {
-            setSelectedPlan(newPlans.find(p => p.id === planId) ?? null);
+    const handleSelectPlan = (plan: Plan) => {
+        setSelectedPlan(plan);
+    }
+    
+    // When the active plan is changed, also update the selected plan to match
+    const handleSetActivePlan = (planId: string) => {
+        setActivePlan(planId);
+        const newActivePlan = plans.find(p => p.id === planId);
+        if (newActivePlan) {
+            setSelectedPlan(newActivePlan);
         }
-    };
+    }
     
     if (!selectedPlan) {
         return (
@@ -85,15 +60,15 @@ export default function PlanPage() {
                    <PlanList 
                         plans={plans}
                         selectedPlanId={selectedPlan.id}
-                        onSelectPlan={setSelectedPlan}
+                        onSelectPlan={handleSelectPlan}
                    />
                 </div>
                 <div className="lg:col-span-2">
                     <PlanDetails 
                         key={selectedPlan.id}
                         plan={selectedPlan}
-                        onSetActive={setActivePlan}
-                        onVariationsChange={(newVariations) => handleVariationsChange(selectedPlan.id, newVariations)}
+                        onSetActive={handleSetActivePlan}
+                        onVariationsChange={(newVariations) => updatePlanVariations(selectedPlan.id, newVariations)}
                     />
                 </div>
             </div>
