@@ -3,10 +3,12 @@
 import { AppShell } from "@/components/layout/app-shell";
 import ProgressCharts from "@/components/progress/progress-charts";
 import { Button } from "@/components/ui/button";
-import { PlusCircle } from "lucide-react";
+import { PlusCircle, History } from "lucide-react";
 import { useState } from "react";
 import { MeasurementForm } from "@/components/profile/measurement-form";
 import type { BodyMeasurement, UserProfile } from "@/lib/types";
+import MeasurementHistory from "@/components/progress/measurement-history";
+import { Separator } from "@/components/ui/separator";
 
 // Mock data, in a real app this would be fetched
 const mockInitialMeasurements: BodyMeasurement[] = [
@@ -74,6 +76,16 @@ export default function ProgressPage() {
                 </header>
                 
                 <ProgressCharts measurements={measurements} />
+
+                <Separator />
+                
+                <div>
+                    <h2 className="text-2xl font-bold tracking-tight text-foreground flex items-center gap-3 mb-4">
+                        <History />
+                        Histórico de Medições
+                    </h2>
+                    <MeasurementHistory measurements={measurements} />
+                </div>
             </div>
         </AppShell>
     );
