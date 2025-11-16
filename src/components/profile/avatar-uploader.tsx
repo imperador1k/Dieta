@@ -28,9 +28,70 @@ function centerAspectCrop(mediaWidth: number, mediaHeight: number, aspect: numbe
   );
 }
 
+// This function is what we are fixing
+async function getCroppedImg(
+  image: HTMLImageElement,
+  crop: Crop,
+  fileName: string
+): Promise<string> {
+  const canvas = document.createElement("canvas");
+  const scaleX = image.naturalWidth / image.width;
+  const scaleY = image.naturalHeight / image.height;
+  
+  const ctx = canvas.getContext("2d");
+  if (!ctx) {
+    throw new Error('Failed to get 2d context');
+  }
+
+  const pixelRatio = window.devicePixelRatio;
+  canvas.width = Math.floor(crop.width * scaleX * pixelRatio);
+  canvas.height = Math.floor(crop.height * scaleY * pixelRatio);
+  
+  ctx.scale(pixelRatio, pixelRatio);
+  ctx.imageSmoothingQuality = "high";
+
+  const cropX = crop.x * scaleX;
+  const cropY = crop.y * scaleY;
+
+  const centerX = image.naturalWidth / 2;
+  const centerY = image.naturalHeight / 2;
+  
+  ctx.save();
+
+  // 5) Move the crop origin to the canvas origin (0,0)
+  ctx.translate(-cropX, -cropY);
+  // 4) Move the origin to the center of the original position
+  ctx.translate(centerX, centerY);
+  // 3) Rotate around the origin
+  // 2) Scale the image
+  // 1) Move the center of the image to the origin (0,0)
+  ctx.translate(-centerX, -centerY);
+  ctx.drawImage(
+    image,
+    0,
+    0,
+    image.naturalWidth,
+    image.naturalHeight,
+  );
+
+  ctx.restore();
+
+  return new Promise((resolve) => {
+    canvas.toBlob((blob) => {
+        if (!blob) {
+            console.error("Canvas is empty");
+            return;
+        }
+        resolve(window.URL.createObjectURL(blob));
+    }, 'image/png', 1);
+  });
+}
+
+
 export function AvatarUploader({ name, email, avatarUrl, onAvatarChange, onNameChange, onEmailChange }: AvatarUploaderProps) {
     const [imgSrc, setImgSrc] = useState('');
     const [crop, setCrop] = useState<Crop>();
+    const [completedCrop, setCompletedCrop] = useState<Crop>();
     const [isCropModalOpen, setIsCropModalOpen] = useState(false);
     const imgRef = useRef<HTMLImageElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -51,47 +112,13 @@ export function AvatarUploader({ name, email, avatarUrl, onAvatarChange, onNameC
     };
 
     const handleCrop = async () => {
-        if (imgRef.current && crop?.width && crop?.height) {
-            const croppedImageUrl = await getCroppedImg(imgRef.current, crop);
+        if (imgRef.current && completedCrop?.width && completedCrop?.height) {
+            const croppedImageUrl = await getCroppedImg(imgRef.current, completedCrop, "new-avatar.png");
             onAvatarChange(croppedImageUrl);
             setIsCropModalOpen(false);
         }
     };
-
-    function getCroppedImg(image: HTMLImageElement, crop: Crop): Promise<string> {
-        const canvas = document.createElement('canvas');
-        const scaleX = image.naturalWidth / image.width;
-        const scaleY = image.naturalHeight / image.height;
-        canvas.width = crop.width;
-        canvas.height = crop.height;
-        const ctx = canvas.getContext('2d');
-
-        if (!ctx) {
-            return Promise.reject(new Error('Failed to get canvas context'));
-        }
-
-        const pixelRatio = window.devicePixelRatio;
-        canvas.width = crop.width * pixelRatio;
-        canvas.height = crop.height * pixelRatio;
-        ctx.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
-        ctx.imageSmoothingQuality = 'high';
-
-        ctx.drawImage(
-            image,
-            crop.x * scaleX,
-            crop.y * scaleY,
-            crop.width * scaleX,
-            crop.height * scaleY,
-            0,
-            0,
-            crop.width,
-            crop.height
-        );
-        
-        return new Promise((resolve) => {
-            resolve(canvas.toDataURL('image/jpeg'));
-        });
-    }
+    
 
     return (
         <>
@@ -147,6 +174,7 @@ export function AvatarUploader({ name, email, avatarUrl, onAvatarChange, onNameC
                             <ReactCrop
                                 crop={crop}
                                 onChange={(_, percentCrop) => setCrop(percentCrop)}
+                                onComplete={(c) => setCompletedCrop(c)}
                                 aspect={1}
                                 circularCrop
                             >
