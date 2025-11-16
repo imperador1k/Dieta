@@ -47,10 +47,11 @@ export default function MealsPage() {
                 </div>
 
                 <div className="w-full max-w-4xl mx-auto space-y-6">
-                    <div className="flex justify-end">
+                    <div className="flex justify-between items-center">
+                        <h2 className="text-lg font-semibold text-foreground">Variação do Dia</h2>
                         <Select value={activeVariationId} onValueChange={setActiveVariationId}>
                             <SelectTrigger className="w-full sm:w-[220px]">
-                                <SelectValue placeholder="Selecione a variação do dia" />
+                                <SelectValue placeholder="Selecione a variação" />
                             </SelectTrigger>
                             <SelectContent>
                                 {initialVariations.map(v => (
