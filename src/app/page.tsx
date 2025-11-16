@@ -31,22 +31,20 @@ const itemVariants = {
 export default function DashboardPage() {
   return (
     <AppShell>
-      <div className="max-w-7xl mx-auto">
-        <motion.div
-          className="grid gap-6 grid-cols-1 lg:grid-cols-3 auto-rows-max"
-          variants={containerVariants}
-          initial="hidden"
-          animate="visible"
-        >
-          <motion.div className="lg:col-span-1" variants={itemVariants}>
-            <DailyEnergyWidget />
-          </motion.div>
-          <motion.div className="lg:col-span-2 space-y-6" variants={itemVariants}>
-            <BodyTrendsWidget />
-            <MicronutrientsWidget />
-          </motion.div>
+      <motion.div
+        className="grid gap-6 grid-cols-1 lg:grid-cols-3 auto-rows-max"
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+      >
+        <motion.div className="lg:col-span-1" variants={itemVariants}>
+          <DailyEnergyWidget />
         </motion.div>
-      </div>
+        <motion.div className="lg:col-span-2 space-y-6" variants={itemVariants}>
+          <BodyTrendsWidget />
+          <MicronutrientsWidget />
+        </motion.div>
+      </motion.div>
     </AppShell>
   );
 }
