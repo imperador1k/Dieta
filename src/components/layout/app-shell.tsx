@@ -75,7 +75,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="relative flex min-h-screen flex-col">
       <Header />
-      <main className="flex-1 container py-6">{children}</main>
+      <main className="flex-1">
+        <div className="container mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+            {children}
+        </div>
+      </main>
     </div>
   );
 }
