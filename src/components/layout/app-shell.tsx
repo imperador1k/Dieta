@@ -7,65 +7,70 @@ import {
   FileText,
   PlusSquare,
   BarChart2,
-  Settings,
-  User,
   GalleryVertical,
+  UtensilsCrossed,
 } from 'lucide-react';
 import { Icons } from '@/components/icons';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { Button } from '../ui/button';
 import { cn } from '@/lib/utils';
+import { motion } from 'framer-motion';
 
 const navItems = [
   { href: '/', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/plan', label: 'Plano', icon: FileText },
+  { href: '/meals', label: 'Refeições', icon: UtensilsCrossed },
   { href: '/log', label: 'Registo', icon: PlusSquare },
   { href: '/progress', label: 'Progresso', icon: BarChart2 },
-  { href: '/plan', label: 'Plano', icon: FileText },
-  { href: '/gallery', label: 'Galeria', icon: GalleryVertical, disabled: true },
+  { href: '/gallery', label: 'Galeria', icon: GalleryVertical },
 ];
 
 function Header() {
   const pathname = usePathname();
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b bg-background/95 shadow-sm drop-shadow-sm">
-      <div className="container flex h-16 items-center space-x-4 sm:justify-between sm:space-x-0">
-        <div className="flex gap-6 md:gap-10">
-          <Link href="/" className="flex items-center space-x-2">
-            <Icons.Logo className="h-6 w-6 text-primary" />
-            <span className="inline-block font-bold">DietaS</span>
-          </Link>
-          <nav className="hidden gap-6 md:flex">
-            {navItems.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={cn(
-                  "flex items-center text-sm font-medium text-muted-foreground transition-colors hover:text-foreground",
-                  pathname === item.href && "text-foreground",
-                  item.disabled && "cursor-not-allowed opacity-50"
-                )}
-              >
-                {item.label}
-              </Link>
-            ))}
-          </nav>
-        </div>
-
-        <div className="flex flex-1 items-center justify-end space-x-4">
-          <nav className="flex items-center space-x-2">
-            <Button variant="ghost" size="icon">
-              <Settings className="h-5 w-5" />
-            </Button>
-            <Avatar className='h-8 w-8'>
-              <AvatarImage src="https://github.com/shadcn.png" alt="@shadcn" />
-              <AvatarFallback>
-                <User className="h-5 w-5"/>
-              </AvatarFallback>
-            </Avatar>
-          </nav>
-        </div>
-      </div>
+    <header className="fixed top-4 left-0 z-50 w-full px-4">
+      <motion.div
+        initial={{ y: -100, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ type: 'spring', stiffness: 70, damping: 20 }}
+        className="relative mx-auto flex h-16 max-w-7xl items-center justify-between rounded-full border border-primary/10 bg-background/60 p-2 pl-4 pr-2 shadow-lg backdrop-blur-xl"
+      >
+        <Link href="/" className="flex items-center space-x-2">
+          <Icons.Logo className="h-8 w-8 text-primary transition-transform duration-300 hover:scale-110" />
+        </Link>
+        <nav className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+          <ul className="flex items-center gap-2">
+            {navItems.map((item) => {
+              const isActive = pathname === item.href;
+              return (
+                <li key={item.href}>
+                  <Link href={item.href}>
+                    <Button
+                      variant="ghost"
+                      className={cn(
+                        "flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium text-muted-foreground transition-all duration-300 hover:text-foreground",
+                        isActive && "bg-primary/10 text-primary shadow-inner shadow-primary/5",
+                        item.disabled && "cursor-not-allowed opacity-50"
+                      )}
+                      disabled={item.disabled}
+                    >
+                      <item.icon className="h-4 w-4" />
+                      <span>{item.label}</span>
+                    </Button>
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </nav>
+        <Avatar className='h-10 w-10 border-2 border-transparent transition-all duration-300 hover:border-primary'>
+          <AvatarImage src="https://github.com/shadcn.png" alt="@shadcn" />
+          <AvatarFallback>
+            <Icons.Logo className="h-5 w-5" />
+          </AvatarFallback>
+        </Avatar>
+      </motion.div>
     </header>
   );
 }
@@ -75,7 +80,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="relative flex min-h-screen flex-col">
       <Header />
-      <main className="flex-1">
+      <main className="flex-1 pt-24">
         <div className="container mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
             {children}
         </div>
