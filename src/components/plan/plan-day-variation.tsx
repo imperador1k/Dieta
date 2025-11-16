@@ -4,7 +4,7 @@
 import { Button } from "../ui/button";
 import { Card, CardContent } from "../ui/card";
 import { Input } from "../ui/input";
-import { MoreVertical, PlusCircle, Trash2 } from "lucide-react";
+import { Pencil, PlusCircle, Trash2, Save, X } from "lucide-react";
 import type { Variation } from "@/lib/types";
 import { useState } from "react";
 
@@ -15,6 +15,8 @@ type PlanDayVariationProps = {
 
 export default function PlanDayVariation({ variations, onVariationsChange }: PlanDayVariationProps) {
     const [newVariationName, setNewVariationName] = useState("");
+    const [editingId, setEditingId] = useState<string | null>(null);
+    const [editingName, setEditingName] = useState("");
 
     const addVariation = () => {
         if (newVariationName.trim() === "") return;
@@ -30,18 +32,59 @@ export default function PlanDayVariation({ variations, onVariationsChange }: Pla
         onVariationsChange(variations.filter(v => v.id !== id));
     };
 
+    const handleEditClick = (variation: Variation) => {
+        setEditingId(variation.id);
+        setEditingName(variation.name);
+    }
+
+    const handleSaveName = (id: string) => {
+        if (editingName.trim() === "") return;
+        onVariationsChange(variations.map(v => v.id === id ? { ...v, name: editingName } : v));
+        setEditingId(null);
+        setEditingName("");
+    }
+
+    const handleCancelEdit = () => {
+        setEditingId(null);
+        setEditingName("");
+    }
+
     return (
         <Card className="bg-muted/30">
             <CardContent className="p-4 space-y-3">
                 <div className="flex flex-col gap-2">
                     {variations.map(v => (
-                        <div key={v.id} className="flex items-center justify-between p-2 rounded-md bg-background/50">
-                            <span className="font-medium text-sm">{v.name}</span>
-                            <div className="flex items-center">
-                                <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive/80 hover:text-destructive" onClick={() => removeVariation(v.id)}>
-                                    <Trash2 className="w-4 h-4" />
-                                </Button>
-                            </div>
+                        <div key={v.id} className="flex items-center justify-between p-2 rounded-md bg-background/50 min-h-[48px]">
+                            {editingId === v.id ? (
+                                <>
+                                    <Input 
+                                        value={editingName} 
+                                        onChange={(e) => setEditingName(e.target.value)}
+                                        onKeyDown={(e) => e.key === 'Enter' && handleSaveName(v.id)}
+                                        className="h-9"
+                                    />
+                                    <div className="flex items-center">
+                                        <Button variant="ghost" size="icon" className="h-8 w-8 text-primary" onClick={() => handleSaveName(v.id)}>
+                                            <Save className="w-4 h-4" />
+                                        </Button>
+                                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleCancelEdit}>
+                                            <X className="w-4 h-4" />
+                                        </Button>
+                                    </div>
+                                </>
+                            ) : (
+                                <>
+                                    <span className="font-medium text-sm">{v.name}</span>
+                                    <div className="flex items-center">
+                                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEditClick(v)}>
+                                            <Pencil className="w-4 h-4" />
+                                        </Button>
+                                        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive/80 hover:text-destructive" onClick={() => removeVariation(v.id)}>
+                                            <Trash2 className="w-4 h-4" />
+                                        </Button>
+                                    </div>
+                                </>
+                            )}
                         </div>
                     ))}
                 </div>
