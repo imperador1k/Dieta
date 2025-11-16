@@ -51,9 +51,7 @@ function Header() {
                       className={cn(
                         "flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium text-muted-foreground transition-all duration-300 hover:text-foreground",
                         isActive && "bg-primary/10 text-primary shadow-inner shadow-primary/5",
-                        item.disabled && "cursor-not-allowed opacity-50"
                       )}
-                      disabled={item.disabled}
                     >
                       <item.icon className="h-4 w-4" />
                       <span>{item.label}</span>
