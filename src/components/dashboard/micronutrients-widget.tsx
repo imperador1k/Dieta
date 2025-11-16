@@ -2,7 +2,12 @@
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { Salt } from 'lucide-react';
+
+const SaltIcon = (props: React.SVGProps<SVGSVGElement>) => (
+    <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M11 8.5v-2a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v2"/><path d="M10 11h4"/><path d="M10 14h4"/><path d="M10 17h4"/><path d="M14 22H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v6.5"/><circle cx="17.5" cy="17.5" r="2.5"/><path d="m22 22-2-2"/>
+    </svg>
+)
 
 const PotassiumIcon = (props: React.SVGProps<SVGSVGElement>) => (
     <svg {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -39,7 +44,7 @@ type Micronutrient = {
 };
 
 const micronutrientsData: Micronutrient[] = [
-  { name: 'Sódio', consumed: 1800, goal: 2300, unit: 'mg', icon: Salt },
+  { name: 'Sódio', consumed: 1800, goal: 2300, unit: 'mg', icon: SaltIcon },
   { name: 'Potássio', consumed: 3000, goal: 3500, unit: 'mg', icon: PotassiumIcon },
   { name: 'Vitamina D', consumed: 15, goal: 20, unit: 'µg', icon: VitaminDIcon },
   { name: 'Cálcio', consumed: 800, goal: 1000, unit: 'mg', icon: CalciumIcon },
