@@ -5,7 +5,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { MoreVertical, PlusCircle, Utensils, Grape, Flame, Fish, Wheat, Droplet, StickyNote, Save, CookingPot } from "lucide-react";
+import { MoreVertical, PlusCircle, Utensils, Grape, Flame, Fish, Wheat, Droplet, StickyNote, Save, CookingPot, CheckCircle2, Circle } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -13,7 +13,6 @@ import { Textarea } from "../ui/textarea";
 import { FoodSearchDialog } from "./food-search-dialog";
 import type { FoodItemData, Meal, MealItem, Dish } from "@/lib/types";
 import FoodItem from "./food-item";
-import { getFoodDetails } from "@/app/log/actions";
 
 const MacroBadge = ({ Icon, value, unit, className }: { Icon: React.ElementType, value: number, unit: string, className?: string }) => (
     <div className={cn("flex items-center gap-1 text-xs", className)}>
@@ -113,7 +112,7 @@ export default function MealCategoriesWidget({ meals, onMealsChange, savedDishes
         const updatedMeals = meals.map(meal => {
             if (meal.id === activeMealId) {
                 const isDish = 'ingredients' in item;
-                const itemToAdd: MealItem = isDish ? { ...item, type: 'dish', eaten: false } : { ...item, type: 'food', eaten: false };
+                const itemToAdd: MealItem = isDish ? { ...item, type: 'dish', eaten: false, ingredients: item.ingredients.map(i => ({...i, eaten: false})) } : { ...item, type: 'food', eaten: false };
 
                 const existingItemIndex = meal.items.findIndex(i => i.id === item.id);
                 
@@ -121,7 +120,21 @@ export default function MealCategoriesWidget({ meals, onMealsChange, savedDishes
                 if (existingItemIndex > -1) {
                     const currentItem = meal.items[existingItemIndex];
                     updatedItems = [...meal.items];
-                    updatedItems[existingItemIndex] = { ...itemToAdd, eaten: currentItem.eaten };
+                    // Retain the 'eaten' status of the top-level item and its ingredients
+                    const newEatenState = currentItem.eaten;
+                    const newIngredientsState = currentItem.type === 'dish' ? currentItem.ingredients.map(ing => ({...ing})) : undefined;
+
+                    updatedItems[existingItemIndex] = { 
+                        ...itemToAdd, 
+                        eaten: newEatenState,
+                    };
+                    if (updatedItems[existingItemIndex].type === 'dish' && newIngredientsState) {
+                        (updatedItems[existingItemIndex] as Dish & {type: 'dish'}).ingredients = (itemToAdd as Dish & {type: 'dish'}).ingredients.map(newIng => {
+                           const oldIng = newIngredientsState.find(old => old.id === newIng.id);
+                           return oldIng ? {...newIng, eaten: oldIng.eaten} : {...newIng, eaten: false};
+                        });
+                    }
+
                 } else {
                     updatedItems = [...meal.items, itemToAdd];
                 }
@@ -204,13 +217,12 @@ export default function MealCategoriesWidget({ meals, onMealsChange, savedDishes
                     if (item.id === dishId && item.type === 'dish') {
                         let allEaten = true;
                         const updatedIngredients = item.ingredients.map(ing => {
+                            let updatedIng = ing;
                             if (ing.id === ingredientId) {
-                                const updatedIng = {...ing, eaten: !ing.eaten};
-                                if (!updatedIng.eaten) allEaten = false;
-                                return updatedIng;
+                                updatedIng = {...ing, eaten: !ing.eaten};
                             }
-                            if (!ing.eaten) allEaten = false;
-                            return ing;
+                            if (!updatedIng.eaten) allEaten = false;
+                            return updatedIng;
                         });
                         return { ...item, ingredients: updatedIngredients, eaten: allEaten };
                     }
@@ -220,6 +232,32 @@ export default function MealCategoriesWidget({ meals, onMealsChange, savedDishes
             }
             return meal;
         });
+        onMealsChange(updatedMeals);
+    }
+    
+    const toggleMealEaten = (mealId: string) => {
+        const meal = meals.find(m => m.id === mealId);
+        if (!meal) return;
+
+        const allCurrentlyEaten = meal.items.every(item => item.eaten);
+        const newEatenState = !allCurrentlyEaten;
+
+        const updatedMeals = meals.map(m => {
+            if (m.id === mealId) {
+                return {
+                    ...m,
+                    items: m.items.map(item => {
+                        const updatedItem = { ...item, eaten: newEatenState };
+                        if (updatedItem.type === 'dish') {
+                            updatedItem.ingredients = updatedItem.ingredients.map(ing => ({...ing, eaten: newEatenState}));
+                        }
+                        return updatedItem;
+                    })
+                };
+            }
+            return m;
+        });
+
         onMealsChange(updatedMeals);
     }
 
@@ -269,7 +307,9 @@ export default function MealCategoriesWidget({ meals, onMealsChange, savedDishes
                     ) : (
                         <Accordion type="multiple" defaultValue={meals.map(m => m.id)} className="space-y-4">
                             <AnimatePresence>
-                                {meals.map((meal) => (
+                                {meals.map((meal) => {
+                                    const isAllEaten = meal.items.length > 0 && meal.items.every(item => item.eaten);
+                                    return (
                                     <motion.div
                                         key={meal.id}
                                         initial={{ opacity: 0, y: -20 }}
@@ -279,18 +319,33 @@ export default function MealCategoriesWidget({ meals, onMealsChange, savedDishes
                                     >
                                         <AccordionItem value={meal.id} className="border-b-0">
                                             <Card className="bg-muted/30">
-                                                <AccordionTrigger className="p-4 text-lg font-semibold hover:no-underline">
-                                                    <div className="flex items-center gap-4 flex-1">
-                                                        <Grape className="w-6 h-6 text-primary" />
-                                                        <span className="truncate">{meal.name}</span>
-                                                    </div>
-                                                    <div className="flex items-center gap-3 text-sm text-muted-foreground pr-2">
-                                                        <MacroBadge Icon={Flame} value={meal.totalCalories} unit="kcal" className="text-foreground font-semibold" />
-                                                        <MacroBadge Icon={Fish} value={meal.protein} unit="g" className="text-chart-1" />
-                                                        <MacroBadge Icon={Wheat} value={meal.carbs} unit="g" className="text-chart-2" />
-                                                        <MacroBadge Icon={Droplet} value={meal.fat} unit="g" className="text-chart-3" />
-                                                    </div>
-                                                </AccordionTrigger>
+                                                <div className="flex items-center p-4">
+                                                    <button onClick={() => toggleMealEaten(meal.id)} className="p-2 rounded-full hover:bg-background/50 transition-colors">
+                                                        <AnimatePresence mode="wait">
+                                                            <motion.div
+                                                                key={isAllEaten ? 'eaten' : 'uneaten'}
+                                                                initial={{ scale: 0.5, opacity: 0, rotate: -30 }}
+                                                                animate={{ scale: 1, opacity: 1, rotate: 0 }}
+                                                                exit={{ scale: 0.5, opacity: 0, rotate: 30 }}
+                                                                transition={{ duration: 0.2 }}
+                                                            >
+                                                                {isAllEaten ? <CheckCircle2 className="w-6 h-6 text-primary" /> : <Circle className="w-6 h-6 text-muted-foreground/50" />}
+                                                            </motion.div>
+                                                        </AnimatePresence>
+                                                    </button>
+                                                    <AccordionTrigger className="p-0 pl-2 text-lg font-semibold hover:no-underline flex-1">
+                                                        <div className="flex items-center gap-4 flex-1">
+                                                            <Grape className="w-6 h-6 text-primary" />
+                                                            <span className="truncate">{meal.name}</span>
+                                                        </div>
+                                                        <div className="flex items-center gap-3 text-sm text-muted-foreground pr-2">
+                                                            <MacroBadge Icon={Flame} value={meal.totalCalories} unit="kcal" className="text-foreground font-semibold" />
+                                                            <MacroBadge Icon={Fish} value={meal.protein} unit="g" className="text-chart-1" />
+                                                            <MacroBadge Icon={Wheat} value={meal.carbs} unit="g" className="text-chart-2" />
+                                                            <MacroBadge Icon={Droplet} value={meal.fat} unit="g" className="text-chart-3" />
+                                                        </div>
+                                                    </AccordionTrigger>
+                                                </div>
                                                 <AccordionContent className="px-4 pb-4">
                                                     <div className="border-t border-muted-foreground/20 pt-4 space-y-4">
                                                         <div className="space-y-2">
@@ -321,7 +376,8 @@ export default function MealCategoriesWidget({ meals, onMealsChange, savedDishes
                                             </Card>
                                         </AccordionItem>
                                     </motion.div>
-                                ))}
+                                    )
+                                })}
                             </AnimatePresence>
                         </Accordion>
                     )}
@@ -330,5 +386,3 @@ export default function MealCategoriesWidget({ meals, onMealsChange, savedDishes
         </>
     )
 }
-
-    
