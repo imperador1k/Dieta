@@ -95,16 +95,22 @@ const TotalMacroBar = ({
                     <span className="font-bold text-foreground">{Math.round(value)}g</span> / {goal}g
                 </div>
             </div>
-            <div className="w-full bg-muted/30 rounded-full h-2.5 relative">
-                <div 
-                    className="h-full rounded-full transition-all duration-500" 
-                    style={{ 
-                        width: `${Math.min(percentage, 100)}%`, 
-                        backgroundColor: color 
-                    }}
+            <div className="w-full bg-muted/30 rounded-full h-2.5 relative overflow-hidden">
+                <motion.div 
+                    className="h-full rounded-full" 
+                    style={{ backgroundColor: color }}
+                    initial={{ width: 0 }}
+                    animate={{ width: `${Math.min(percentage, 100)}%` }}
+                    transition={{ duration: 0.8, ease: "easeOut" }}
                 />
                  {isOver && (
-                    <div className="absolute top-0 h-full rounded-full bg-destructive" style={{ width: `${Math.min(percentage - 100, 100)}%`, left: '100%' }} />
+                    <motion.div 
+                        className="absolute top-0 h-full rounded-r-full bg-destructive" 
+                        style={{ left: '100%', marginLeft: '-1px' }} 
+                        initial={{ width: 0 }}
+                        animate={{ width: `${Math.min(percentage - 100, 100)}%`}}
+                        transition={{ duration: 0.5, ease: "easeOut", delay: 0.3 }}
+                    />
                 )}
             </div>
         </div>

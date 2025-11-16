@@ -1,8 +1,8 @@
 
 'use client';
 
-import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
-import type { Plan, Dish, BodyMeasurement, UserProfile, Variation, Meal } from '@/lib/types';
+import React, { createContext, useContext, useState, ReactNode, useEffect, useMemo } from 'react';
+import type { Plan, Dish, BodyMeasurement, UserProfile, Variation, Meal, MealItem } from '@/lib/types';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import type { EvolutionPhoto } from '@/lib/types';
 
@@ -73,6 +73,12 @@ const initialPhotos: EvolutionPhoto[] = PlaceHolderImages.map((p, index) => ({
   height: 1350,
 }));
 
+type ConsumedTotals = {
+    calories: number;
+    protein: number;
+    carbs: number;
+    fat: number;
+}
 // Types
 type MealsByVariation = {
     [variationId: string]: Meal[];
@@ -112,6 +118,7 @@ interface AppContextType {
     setActiveVariationId: React.Dispatch<React.SetStateAction<string | undefined>>;
     todaysMeals: Meal[];
     toggleMealItemEaten: (mealId: string, itemId: string, newEatenState: boolean) => void;
+    consumedTotals: ConsumedTotals;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -216,6 +223,35 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
             [activeVariationId]: updatedMeals,
         }));
     };
+    
+    const consumedTotals: ConsumedTotals = useMemo(() => {
+        const totals: ConsumedTotals = { calories: 0, protein: 0, carbs: 0, fat: 0 };
+        if (!todaysMeals) return totals;
+
+        todaysMeals.forEach(meal => {
+            meal.items.forEach(item => {
+                if (item.eaten) {
+                    if (item.type === 'food') {
+                        const multiplier = item.servingSize / 100;
+                        totals.calories += item.nutrients.calories * multiplier;
+                        totals.protein += item.nutrients.protein * multiplier;
+                        totals.carbs += item.nutrients.carbohydrates * multiplier;
+                        totals.fat += item.nutrients.fat * multiplier;
+                    } else if (item.type === 'dish') {
+                        item.ingredients.forEach(ingredient => {
+                            const multiplier = ingredient.servingSize / 100;
+                            totals.calories += ingredient.nutrients.calories * multiplier;
+                            totals.protein += ingredient.nutrients.protein * multiplier;
+                            totals.carbs += ingredient.nutrients.carbohydrates * multiplier;
+                            totals.fat += ingredient.nutrients.fat * multiplier;
+                        });
+                    }
+                }
+            });
+        });
+        return totals;
+    }, [todaysMeals]);
+
 
     const value = {
         profile, setProfile,
@@ -227,6 +263,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         activeVariationId, setActiveVariationId,
         todaysMeals,
         toggleMealItemEaten,
+        consumedTotals
     };
 
     return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

@@ -1,16 +1,11 @@
+
 'use client';
 
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Drumstick, Wheat, Droplet, Flame } from "lucide-react";
 import { motion } from 'framer-motion';
-
-const totalCalories = { consumed: 1850, goal: 2500 };
-const macros = {
-    protein: { consumed: 120, goal: 180, color: "hsl(var(--chart-1))", icon: Drumstick },
-    carbs: { consumed: 250, goal: 300, color: "hsl(var(--chart-2))", icon: Wheat },
-    fat: { consumed: 60, goal: 70, color: "hsl(var(--chart-3))", icon: Droplet },
-};
+import { useAppContext } from '@/app/context/AppContext';
 
 const CalorieCircularProgress = ({
   consumed,
@@ -22,7 +17,7 @@ const CalorieCircularProgress = ({
   const radius = 65;
   const strokeWidth = 12;
   const circumference = 2 * Math.PI * radius;
-  const progress = Math.min(consumed / goal, 1);
+  const progress = goal > 0 ? Math.min(consumed / goal, 1) : 0;
   const strokeDashoffset = circumference - progress * circumference;
 
   return (
@@ -88,7 +83,7 @@ const MacroLinearProgress = ({
   Icon: React.ElementType;
   delay?: number;
 }) => {
-    const percentage = (consumed / goal) * 100;
+    const percentage = goal > 0 ? (consumed / goal) * 100 : 0;
     return (
         <div className="flex flex-col gap-2">
             <div className="flex justify-between items-center">
@@ -96,7 +91,7 @@ const MacroLinearProgress = ({
                     <Icon className="w-4 h-4" style={{ color }} />
                     <p className="font-semibold text-sm text-foreground">{label}</p>
                 </div>
-                <p className="text-sm text-muted-foreground">{consumed}g / {goal}g</p>
+                <p className="text-sm text-muted-foreground">{Math.round(consumed)}g / {goal}g</p>
             </div>
             <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted/30 mt-1">
                 <motion.div
@@ -111,8 +106,18 @@ const MacroLinearProgress = ({
     )
 }
 
+const macrosConfig = {
+    protein: { color: "hsl(var(--chart-1))", icon: Drumstick },
+    carbs: { color: "hsl(var(--chart-2))", icon: Wheat },
+    fat: { color: "hsl(var(--chart-3))", icon: Droplet },
+};
+
 
 export default function DailyEnergyWidget() {
+  const { activePlan, consumedTotals } = useAppContext();
+  
+  const targets = activePlan?.targets || { calories: 0, protein: 0, carbs: 0, fat: 0 };
+
   return (
     <Card className="glass-card flex flex-col h-full border border-primary/20 shadow-primary/10 shadow-lg">
       <CardHeader>
@@ -120,32 +125,32 @@ export default function DailyEnergyWidget() {
       </CardHeader>
       <CardContent className="flex-1 flex flex-col items-center justify-center gap-6 py-6">
         <CalorieCircularProgress
-            consumed={totalCalories.consumed}
-            goal={totalCalories.goal}
+            consumed={consumedTotals.calories}
+            goal={targets.calories}
         />
         <div className="grid grid-cols-1 gap-4 w-full px-4">
             <MacroLinearProgress 
                 label="Proteína"
-                consumed={macros.protein.consumed}
-                goal={macros.protein.goal}
-                color={macros.protein.color}
-                Icon={macros.protein.icon}
+                consumed={consumedTotals.protein}
+                goal={targets.protein}
+                color={macrosConfig.protein.color}
+                Icon={macrosConfig.protein.icon}
                 delay={0.4}
             />
             <MacroLinearProgress 
                 label="Carboidratos"
-                consumed={macros.carbs.consumed}
-                goal={macros.carbs.goal}
-                color={macros.carbs.color}
-                Icon={macros.carbs.icon}
+                consumed={consumedTotals.carbs}
+                goal={targets.carbs}
+                color={macrosConfig.carbs.color}
+                Icon={macrosConfig.carbs.icon}
                 delay={0.6}
             />
             <MacroLinearProgress 
                 label="Gordura"
-                consumed={macros.fat.consumed}
-                goal={macros.fat.goal}
-                color={macros.fat.color}
-                Icon={macros.fat.icon}
+                consumed={consumedTotals.fat}
+                goal={targets.fat}
+                color={macrosConfig.fat.color}
+                Icon={macrosConfig.fat.icon}
                 delay={0.8}
             />
         </div>
