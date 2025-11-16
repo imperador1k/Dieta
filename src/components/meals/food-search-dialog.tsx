@@ -121,7 +121,7 @@ const AddOrEditFoodDetails = ({
             <div className='space-y-4'>
                 {portions && portions.length > 0 && (
                     <div className="space-y-2">
-                        <Label htmlFor="portions">Porções Comuns</Label>
+                        <Label htmlFor="portions" className='flex items-center gap-2'><Utensils className='w-4 h-4'/>Porções Comuns</Label>
                         <Select onValueChange={handlePortionChange} defaultValue={String(servingSize)}>
                             <SelectTrigger id="portions">
                                 <SelectValue placeholder="Selecionar porção" />
@@ -137,9 +137,8 @@ const AddOrEditFoodDetails = ({
                     </div>
                 )}
                 <div className="space-y-2">
-                    <Label htmlFor="serving-size">Peso (em gramas)</Label>
+                    <Label htmlFor="serving-size" className='flex items-center gap-2'><Scale className='w-4 h-4' />Peso (em gramas)</Label>
                     <div className="flex items-center gap-2">
-                        <Scale className="w-5 h-5 text-muted-foreground" />
                         <Input
                             id='serving-size'
                             type="number"
@@ -154,25 +153,29 @@ const AddOrEditFoodDetails = ({
 
             
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
-                <div className="p-3 bg-muted/50 rounded-lg">
+                <div className="p-3 bg-muted/50 rounded-lg flex flex-col items-center gap-1">
+                    <Flame className='w-5 h-5 text-primary'/>
                     <p className="text-xs text-muted-foreground">Calorias</p>
                     <p className="font-bold text-lg text-primary">
                         {(nutrients.calories * servingMultiplier).toFixed(0)}
                     </p>
                 </div>
-                <div className="p-3 bg-muted/50 rounded-lg">
+                <div className="p-3 bg-muted/50 rounded-lg flex flex-col items-center gap-1">
+                    <Fish className='w-5 h-5 text-chart-1' />
                     <p className="text-xs text-muted-foreground">Proteína</p>
                     <p className="font-bold text-lg">
                         {(nutrients.protein * servingMultiplier).toFixed(1)}g
                     </p>
                 </div>
-                <div className="p-3 bg-muted/50 rounded-lg">
+                <div className="p-3 bg-muted/50 rounded-lg flex flex-col items-center gap-1">
+                    <Wheat className='w-5 h-5 text-chart-2'/>
                     <p className="text-xs text-muted-foreground">Hidratos</p>
                     <p className="font-bold text-lg">
                         {(nutrients.carbohydrates * servingMultiplier).toFixed(1)}g
                     </p>
                 </div>
-                <div className="p-3 bg-muted/50 rounded-lg">
+                <div className="p-3 bg-muted/50 rounded-lg flex flex-col items-center gap-1">
+                     <Droplet className='w-5 h-5 text-chart-3' />
                     <p className="text-xs text-muted-foreground">Gordura</p>
                     <p className="font-bold text-lg">
                         {(nutrients.fat * servingMultiplier).toFixed(1)}g
@@ -230,8 +233,7 @@ export function FoodSearchDialog({
     const debouncedQuery = useDebounce(query, 300);
     const [results, setResults] = useState<FoodSearchResult[]>([]);
     const [isSearching, startSearchTransition] = useTransition();
-    const [isLoadingDetails, startDetailsTransition] = useTransition();
-
+    const [isLoadingDetails, setIsLoadingDetails] = useState(false);
     const [selectedFood, setSelectedFood] = useState<FoodDetails | null>(null);
     
     // This state will hold the full details of the food being edited.
@@ -240,13 +242,13 @@ export function FoodSearchDialog({
 
     useEffect(() => {
         if (open && foodToEdit) {
-            startDetailsTransition(async () => {
-                const details = await getFoodDetails(foodToEdit.fdcId);
+            setIsLoadingDetails(true);
+            getFoodDetails(foodToEdit.fdcId).then(details => {
                 if (details) {
-                    // We need to add the servingSize to the details object for the form
                     const detailsWithServing = { ...details, servingSize: foodToEdit.servingSize };
                     setEditingFoodDetails(detailsWithServing);
                 }
+                setIsLoadingDetails(false);
             });
         } else {
             setEditingFoodDetails(null);
@@ -272,11 +274,12 @@ export function FoodSearchDialog({
     }, [debouncedQuery, handleSearch, isEditing]);
 
     const handleSelectResult = (result: FoodSearchResult) => {
-        startDetailsTransition(async () => {
-            const details = await getFoodDetails(result.fdcId);
+        setIsLoadingDetails(true);
+        getFoodDetails(result.fdcId).then(details => {
             if(details) {
                 setSelectedFood(details);
             }
+            setIsLoadingDetails(false);
         });
     }
 
@@ -301,7 +304,7 @@ export function FoodSearchDialog({
         }
     }
 
-    const isPending = isLoadingDetails;
+    const isPending = isSearching || isLoadingDetails;
 
     const currentView = editingFoodDetails ? 'details' : selectedFood ? 'details' : 'search';
     const foodForDetails = editingFoodDetails || selectedFood;
@@ -335,20 +338,26 @@ export function FoodSearchDialog({
                 )}
                 
                 <AnimatePresence mode="wait">
-                   {isPending ? (
-                        <div className="flex justify-center items-center h-96">
-                            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                   {isPending && !foodForDetails ? (
+                        <div className="px-6 pb-6">
+                            <SearchSkeleton />
                         </div>
                    ) : currentView === 'details' && foodForDetails ? (
                         <div className='p-6 pt-0'>
-                            <AddOrEditFoodDetails
-                                key={isEditing ? foodToEdit?.id : 'add'}
-                                food={foodForDetails}
-                                onConfirm={handleConfirmFood}
-                                onBack={() => setSelectedFood(null)}
-                                isEditing={isEditing}
-                                originalId={foodToEdit?.id}
-                            />
+                             {isLoadingDetails ? (
+                                <div className="flex justify-center items-center h-96">
+                                    <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                                </div>
+                             ) : (
+                                <AddOrEditFoodDetails
+                                    key={isEditing ? foodToEdit?.id : 'add'}
+                                    food={foodForDetails}
+                                    onConfirm={handleConfirmFood}
+                                    onBack={() => setSelectedFood(null)}
+                                    isEditing={isEditing}
+                                    originalId={foodToEdit?.id}
+                                />
+                             )}
                         </div>
                    ) : (
                         <motion.div
