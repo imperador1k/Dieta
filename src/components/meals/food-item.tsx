@@ -2,18 +2,21 @@
 'use client';
 
 import type { FoodItemData } from '@/lib/types';
-import { Trash2, Fish, Wheat, Droplet } from 'lucide-react';
+import { Trash2, Fish, Wheat, Droplet, Circle, CheckCircle2 } from 'lucide-react';
 import { Button } from '../ui/button';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
+import { cn } from '@/lib/utils';
 
 export default function FoodItem({ 
     item, 
     onRemove,
-    onEdit 
+    onEdit,
+    onToggleEaten,
 }: { 
     item: FoodItemData, 
     onRemove: () => void,
-    onEdit: () => void 
+    onEdit: () => void,
+    onToggleEaten: () => void,
 }) {
 
     const servingMultiplier = item.servingSize / 100;
@@ -25,11 +28,34 @@ export default function FoodItem({
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, x: -30, transition: { duration: 0.2 } }}
-            className="flex items-center gap-2 p-1 pr-2 rounded-md bg-background/50 group"
+            className={cn(
+                "flex items-center gap-2 p-1 pr-2 rounded-md bg-background/50 group transition-opacity",
+                item.eaten && "opacity-50"
+            )}
         >
+            <button onClick={onToggleEaten} className="p-2 rounded-full hover:bg-muted/50 transition-colors">
+                <AnimatePresence mode="wait">
+                    <motion.div
+                        key={item.eaten ? 'eaten' : 'uneaten'}
+                        initial={{ scale: 0.5, opacity: 0, rotate: -30 }}
+                        animate={{ scale: 1, opacity: 1, rotate: 0 }}
+                        exit={{ scale: 0.5, opacity: 0, rotate: 30 }}
+                        transition={{ duration: 0.2 }}
+                    >
+                        {item.eaten ? (
+                            <CheckCircle2 className="w-5 h-5 text-primary" />
+                        ) : (
+                            <Circle className="w-5 h-5 text-muted-foreground/50" />
+                        )}
+                    </motion.div>
+                </AnimatePresence>
+            </button>
+
             <button onClick={onEdit} className="flex-1 flex items-center text-left gap-3 p-2 rounded-md hover:bg-muted/50 transition-colors">
                 <div className="flex-1">
-                    <p className="font-medium text-sm capitalize">{item.description.toLowerCase()}</p>
+                    <p className={cn("font-medium text-sm capitalize", item.eaten && "line-through")}>
+                        {item.description.toLowerCase()}
+                    </p>
                     <p className="text-xs text-muted-foreground">
                         {item.servingSize}g &bull;{' '}
                         <span className="text-primary font-semibold">{(nutrients.calories * servingMultiplier).toFixed(0)} kcal</span>

@@ -8,6 +8,7 @@ export type FoodItemData = {
     description: string;
     servingSize: number; // in grams
     nutrients: FoodDetails['nutrients'];
+    eaten?: boolean;
 };
 
 export type FoodPortion = {

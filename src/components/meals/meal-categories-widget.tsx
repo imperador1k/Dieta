@@ -115,10 +115,12 @@ export default function MealCategoriesWidget({ meals, onMealsChange }: MealCateg
                 
                 let updatedItems;
                 if (existingItemIndex > -1) {
+                    // When updating, preserve the 'eaten' state if it exists
+                    const currentItem = meal.items[existingItemIndex];
                     updatedItems = [...meal.items];
-                    updatedItems[existingItemIndex] = foodData;
+                    updatedItems[existingItemIndex] = { ...foodData, eaten: currentItem.eaten };
                 } else {
-                    updatedItems = [...meal.items, foodData];
+                    updatedItems = [...meal.items, { ...foodData, eaten: false }]; // Default to not eaten
                 }
 
                 const newTotals = updatedItems.reduce((totals, item) => {
@@ -157,6 +159,19 @@ export default function MealCategoriesWidget({ meals, onMealsChange }: MealCateg
         });
         onMealsChange(updatedMeals);
     }
+
+    const toggleFoodItemEaten = (mealId: string, foodId: string) => {
+        const updatedMeals = meals.map(meal => {
+            if (meal.id === mealId) {
+                const updatedItems = meal.items.map(item =>
+                    item.id === foodId ? { ...item, eaten: !item.eaten } : item
+                );
+                return { ...meal, items: updatedItems };
+            }
+            return meal;
+        });
+        onMealsChange(updatedMeals);
+    };
 
     return (
         <>
@@ -235,6 +250,7 @@ export default function MealCategoriesWidget({ meals, onMealsChange }: MealCateg
                                                                         item={item} 
                                                                         onRemove={() => removeFoodFromMeal(meal.id, item.id)}
                                                                         onEdit={() => openFoodEditor(meal.id, item)}
+                                                                        onToggleEaten={() => toggleFoodItemEaten(meal.id, item.id)}
                                                                     />
                                                                 ))}
                                                             </AnimatePresence>
