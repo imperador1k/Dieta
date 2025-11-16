@@ -1,10 +1,11 @@
+
 'use client';
 
 import { useState } from 'react';
 import { AppShell } from "@/components/layout/app-shell";
 import PlanList from '@/components/plan/plan-list';
 import PlanDetails from '@/components/plan/plan-details';
-import type { Plan } from '@/components/plan/types';
+import type { Plan, Variation } from '@/lib/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { FileText } from 'lucide-react';
 
@@ -42,6 +43,17 @@ export default function PlanPage() {
         const newPlans = plans.map(p => ({ ...p, isActive: p.id === planId }));
         setPlans(newPlans);
         setSelectedPlan(newPlans.find(p => p.id === planId) ?? null);
+    };
+
+    const handleVariationsChange = (planId: string, newVariations: Variation[]) => {
+        const newPlans = plans.map(p => 
+            p.id === planId ? { ...p, variations: newVariations } : p
+        );
+        setPlans(newPlans);
+        // Also update the selected plan if it's the one being changed
+        if (selectedPlan?.id === planId) {
+            setSelectedPlan(newPlans.find(p => p.id === planId) ?? null);
+        }
     };
     
     if (!selectedPlan) {
@@ -81,6 +93,7 @@ export default function PlanPage() {
                         key={selectedPlan.id}
                         plan={selectedPlan}
                         onSetActive={setActivePlan}
+                        onVariationsChange={(newVariations) => handleVariationsChange(selectedPlan.id, newVariations)}
                     />
                 </div>
             </div>

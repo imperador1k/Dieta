@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -5,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Flame, Target, CheckCircle, Repeat } from "lucide-react";
 import PlanDayVariation from "./plan-day-variation";
-import type { Plan } from "./types";
+import type { Plan, Variation } from "@/lib/types";
 import { motion } from "framer-motion";
 
 
@@ -16,7 +17,13 @@ const MacroStat = ({ label, value, unit, color }: { label: string, value: number
     </div>
 );
 
-export default function PlanDetails({ plan, onSetActive }: { plan: Plan; onSetActive: (planId: string) => void; }) {
+interface PlanDetailsProps {
+    plan: Plan;
+    onSetActive: (planId: string) => void;
+    onVariationsChange: (variations: Variation[]) => void;
+}
+
+export default function PlanDetails({ plan, onSetActive, onVariationsChange }: PlanDetailsProps) {
 
     return (
         <motion.div
@@ -62,7 +69,10 @@ export default function PlanDetails({ plan, onSetActive }: { plan: Plan; onSetAc
                     </div>
                     <div>
                          <h3 className="text-lg font-semibold mb-3 flex items-center gap-2"><Repeat className="w-5 h-5 text-primary"/> Variações do Dia</h3>
-                        <PlanDayVariation variations={plan.variations} />
+                        <PlanDayVariation 
+                            variations={plan.variations} 
+                            onVariationsChange={onVariationsChange}
+                        />
                     </div>
                 </CardContent>
             </Card>

@@ -1,16 +1,4 @@
-export interface Plan {
-    id: string;
-    name: string;
-    description: string;
-    isActive: boolean;
-    targets: {
-        calories: number;
-        protein: number;
-        carbs: number;
-        fat: number;
-    };
-    variations: {
-        id: string;
-        name: string;
-    }[];
-}
+
+// This file is deprecated. Types are now in /src/lib/types.ts
+// It is kept to avoid breaking imports, but should be removed in a future refactor.
+export type { Plan, Variation } from '@/lib/types';

@@ -5,34 +5,14 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { MoreVertical, PlusCircle, Utensils, Grape, Flame, Fish, Wheat, Droplet, StickyNote, Save } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { Textarea } from "../ui/textarea";
 import { FoodSearchDialog } from "./food-search-dialog";
-import type { FoodItemData } from "@/lib/types";
+import type { FoodItemData, Meal } from "@/lib/types";
 import FoodItem from "./food-item";
-
-const variations = [
-    { id: "descanso", label: "Dia de Descanso" },
-    { id: "treino-a", label: "Dia de Treino A" },
-    { id: "treino-b", label: "Dia de Treino B" },
-];
-
-type Meal = {
-    id: string;
-    name: string;
-    items: FoodItemData[]; 
-    totalCalories: number;
-    protein: number;
-    carbs: number;
-    fat: number;
-    note?: string;
-};
-
-const initialMeals: Meal[] = [];
 
 const MacroBadge = ({ Icon, value, unit, className }: { Icon: React.ElementType, value: number, unit: string, className?: string }) => (
     <div className={cn("flex items-center gap-1 text-xs", className)}>
@@ -84,13 +64,15 @@ const MealNoteEditor = ({ note, onSave }: { note?: string; onSave: (newNote: str
     )
 }
 
+interface MealCategoriesWidgetProps {
+    meals: Meal[];
+    onMealsChange: (meals: Meal[]) => void;
+}
 
-export default function MealCategoriesWidget() {
-    const [meals, setMeals] = useState<Meal[]>(initialMeals);
+export default function MealCategoriesWidget({ meals, onMealsChange }: MealCategoriesWidgetProps) {
     const [isSearchOpen, setIsSearchOpen] = useState(false);
     const [activeMealId, setActiveMealId] = useState<string | null>(null);
     const [foodToEdit, setFoodToEdit] = useState<FoodItemData | null>(null);
-
 
     const addMealCategory = () => {
         const newMeal: Meal = {
@@ -103,11 +85,12 @@ export default function MealCategoriesWidget() {
             fat: 0,
             note: ""
         };
-        setMeals([...meals, newMeal]);
+        onMealsChange([...meals, newMeal]);
     };
     
     const handleSaveNote = (mealId: string, newNote: string) => {
-        setMeals(meals.map(m => m.id === mealId ? { ...m, note: newNote } : m));
+        const updatedMeals = meals.map(m => m.id === mealId ? { ...m, note: newNote } : m);
+        onMealsChange(updatedMeals);
     }
 
     const openFoodSearch = (mealId: string) => {
@@ -125,17 +108,15 @@ export default function MealCategoriesWidget() {
     const confirmFoodInMeal = (foodData: FoodItemData) => {
         if (!activeMealId) return;
 
-        setMeals(meals.map(meal => {
+        const updatedMeals = meals.map(meal => {
             if (meal.id === activeMealId) {
                 const existingItemIndex = meal.items.findIndex(item => item.id === foodData.id);
                 
                 let updatedItems;
                 if (existingItemIndex > -1) {
-                    // Update existing item
                     updatedItems = [...meal.items];
                     updatedItems[existingItemIndex] = foodData;
                 } else {
-                    // Add new item
                     updatedItems = [...meal.items, foodData];
                 }
 
@@ -151,11 +132,13 @@ export default function MealCategoriesWidget() {
                 return { ...meal, items: updatedItems, ...newTotals };
             }
             return meal;
-        }));
+        });
+
+        onMealsChange(updatedMeals);
     };
     
     const removeFoodFromMeal = (mealId: string, foodId: string) => {
-        setMeals(meals.map(meal => {
+        const updatedMeals = meals.map(meal => {
             if (meal.id === mealId) {
                 const updatedItems = meal.items.filter(item => item.id !== foodId);
                 const newTotals = updatedItems.reduce((totals, item) => {
@@ -170,7 +153,8 @@ export default function MealCategoriesWidget() {
                 return { ...meal, items: updatedItems, ...newTotals };
             }
             return meal;
-        }))
+        });
+        onMealsChange(updatedMeals);
     }
 
     return (
@@ -191,20 +175,9 @@ export default function MealCategoriesWidget() {
                         <div className="flex flex-wrap items-center gap-2">
                             <Button variant="outline" onClick={addMealCategory}>
                                 <PlusCircle className="mr-2 h-4 w-4" />
-                                Adicionar Calendário
+                                Adicionar Refeição
                             </Button>
                             
-                            <Select defaultValue="descanso">
-                                <SelectTrigger className="w-full sm:w-[180px]">
-                                    <SelectValue placeholder="Selecione a variação" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {variations.map(v => (
-                                        <SelectItem key={v.id} value={v.id}>{v.label}</SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                     <Button variant="ghost" size="icon">
@@ -212,8 +185,8 @@ export default function MealCategoriesWidget() {
                                     </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end">
-                                    <DropdownMenuItem>Editar Variações</DropdownMenuItem>
-                                    <DropdownMenuItem onClick={() => setMeals([])}>Limpar Calendários</DropdownMenuItem>
+                                    <DropdownMenuItem>Copiar dia de outro plano</DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => onMealsChange([])}>Limpar Refeições</DropdownMenuItem>
                                 </DropdownMenuContent>
                             </DropdownMenu>
                         </div>
@@ -224,7 +197,7 @@ export default function MealCategoriesWidget() {
                         <div className="text-center text-muted-foreground py-20 border-2 border-dashed border-muted-foreground/20 rounded-lg flex flex-col items-center justify-center">
                             <Utensils className="mx-auto h-12 w-12 text-muted-foreground/50" />
                             <h3 className="mt-4 text-lg font-semibold">O seu dia está vazio</h3>
-                            <p className="mt-2 text-sm max-w-sm">Adicione um "calendário" como "Pequeno-almoço" para começar a organizar as suas refeições.</p>
+                            <p className="mt-2 text-sm max-w-sm">Adicione uma refeição como "Pequeno-almoço" para começar a organizar o seu dia.</p>
                         </div>
                     ) : (
                         <Accordion type="multiple" defaultValue={meals.map(m => m.id)} className="space-y-4">
@@ -254,29 +227,21 @@ export default function MealCategoriesWidget() {
                                                 <AccordionContent className="px-4 pb-4">
                                                     <div className="border-t border-muted-foreground/20 pt-4 space-y-4">
                                                         <div className="space-y-2">
-                                                            {meal.items.map(item => (
-                                                                <FoodItem 
-                                                                    key={item.id} 
-                                                                    item={item} 
-                                                                    onRemove={() => removeFoodFromMeal(meal.id, item.id)}
-                                                                    onEdit={() => openFoodEditor(meal.id, item)}
-                                                                />
-                                                            ))}
+                                                            <AnimatePresence>
+                                                                {meal.items.map(item => (
+                                                                    <FoodItem 
+                                                                        key={item.id} 
+                                                                        item={item} 
+                                                                        onRemove={() => removeFoodFromMeal(meal.id, item.id)}
+                                                                        onEdit={() => openFoodEditor(meal.id, item)}
+                                                                    />
+                                                                ))}
+                                                            </AnimatePresence>
                                                         </div>
-                                                        {meal.items.length === 0 ? (
-                                                            <div className="text-center text-sm text-muted-foreground py-4">
-                                                                <p>Este calendário está vazio.</p>
-                                                                <Button variant="link" className="mt-2" onClick={() => openFoodSearch(meal.id)}>
-                                                                    <PlusCircle className="mr-2 h-4 w-4" />
-                                                                    Adicionar Alimento
-                                                                </Button>
-                                                            </div>
-                                                        ) : (
-                                                            <Button variant="outline" className="w-full" onClick={() => openFoodSearch(meal.id)}>
-                                                                <PlusCircle className="mr-2 h-4 w-4" />
-                                                                Adicionar Alimento
-                                                            </Button>
-                                                        )}
+                                                        <Button variant="outline" className="w-full" onClick={() => openFoodSearch(meal.id)}>
+                                                            <PlusCircle className="mr-2 h-4 w-4" />
+                                                            Adicionar Alimento
+                                                        </Button>
                                                         <MealNoteEditor note={meal.note} onSave={(newNote) => handleSaveNote(meal.id, newNote)} />
                                                     </div>
                                                 </AccordionContent>
