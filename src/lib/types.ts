@@ -67,5 +67,22 @@ export interface BodyMeasurement {
     date: string; // ISO 8601 date string
     weight?: number; // in kg
     bodyFat?: number; // in percentage
+    neck?: number; // in cm
+    waist?: number; // in cm
+    hips?: number; // in cm
+}
+
+export interface UserProfile {
+    name: string;
+    email: string;
+    age: number;
+    height: number; // in cm
+    weight: number; // in kg
+    gender: 'male' | 'female';
+    measurements: {
+        neck: number;
+        waist: number;
+        hips?: number;
+    }
 }
     

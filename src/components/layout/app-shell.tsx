@@ -5,7 +5,7 @@ import Link from 'next/link';
 import {
   LayoutDashboard,
   FileText,
-  PlusSquare,
+  User,
   BarChart2,
   GalleryVertical,
   UtensilsCrossed,
@@ -21,7 +21,7 @@ const navItems = [
   { href: '/', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/plan', label: 'Plano', icon: FileText },
   { href: '/meals', label: 'Refeições', icon: UtensilsCrossed },
-  { href: '/log', label: 'Registo', icon: PlusSquare },
+  { href: '/log', label: 'Registo', icon: UtensilsCrossed },
   { href: '/progress', label: 'Progresso', icon: BarChart2 },
 ];
 
@@ -65,12 +65,14 @@ function Header() {
                 </ul>
             </nav>
         </div>
-        <Avatar className='h-10 w-10 border-2 border-transparent transition-all duration-300 hover:border-primary'>
-          <AvatarImage src="https://github.com/shadcn.png" alt="@shadcn" />
-          <AvatarFallback>
-            <Icons.Logo className="h-5 w-5" />
-          </AvatarFallback>
-        </Avatar>
+        <Link href="/profile">
+            <Avatar className='h-10 w-10 border-2 border-transparent transition-all duration-300 hover:border-primary cursor-pointer'>
+            <AvatarImage src="https://github.com/shadcn.png" alt="@shadcn" />
+            <AvatarFallback>
+                <Icons.Logo className="h-5 w-5" />
+            </AvatarFallback>
+            </Avatar>
+        </Link>
       </motion.div>
     </header>
   );
