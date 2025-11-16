@@ -6,10 +6,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { MoreVertical, PlusCircle, Utensils, Grape, Flame, Fish, Wheat, Droplet } from "lucide-react";
+import { MoreVertical, PlusCircle, Utensils, Grape, Flame, Fish, Wheat, Droplet, StickyNote, Save } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { Textarea } from "../ui/textarea";
 
 const variations = [
     { id: "descanso", label: "Dia de Descanso" },
@@ -25,6 +26,7 @@ type Meal = {
     protein: number;
     carbs: number;
     fat: number;
+    note?: string;
 };
 
 const initialMeals: Meal[] = [];
@@ -34,7 +36,50 @@ const MacroBadge = ({ Icon, value, unit, className }: { Icon: React.ElementType,
         <Icon className="w-3 h-3" />
         <span>{value}{unit}</span>
     </div>
-)
+);
+
+const MealNoteEditor = ({ note, onSave }: { note?: string; onSave: (newNote: string) => void }) => {
+    const [editingNote, setEditingNote] = useState(note || "");
+    const [isEditing, setIsEditing] = useState(false);
+
+    const handleSave = () => {
+        onSave(editingNote);
+        setIsEditing(false);
+    }
+
+    if (isEditing) {
+        return (
+            <div className="space-y-2 mt-4">
+                <Textarea 
+                    value={editingNote} 
+                    onChange={(e) => setEditingNote(e.target.value)}
+                    placeholder="Ex: Em dias de menos treino come menos 10g de amendoins"
+                    rows={2}
+                />
+                <div className="flex justify-end gap-2">
+                    <Button variant="ghost" size="sm" onClick={() => setIsEditing(false)}>Cancelar</Button>
+                    <Button size="sm" onClick={handleSave}><Save className="mr-2 h-4 w-4"/>Guardar</Button>
+                </div>
+            </div>
+        )
+    }
+
+    return (
+        <div className="mt-4">
+            <button onClick={() => setIsEditing(true)} className="flex items-start text-left gap-3 p-3 rounded-lg bg-background/50 hover:bg-background/80 w-full transition-colors">
+                <StickyNote className="w-5 h-5 text-primary/80 mt-1 shrink-0" />
+                <div>
+                    <h4 className="font-semibold text-sm">Notas da Refeição</h4>
+                    {note ? (
+                        <p className="text-sm text-muted-foreground whitespace-pre-wrap">{note}</p>
+                    ) : (
+                        <p className="text-sm text-muted-foreground italic">Adicionar uma nota...</p>
+                    )}
+                </div>
+            </button>
+        </div>
+    )
+}
 
 
 export default function MealCategoriesWidget() {
@@ -48,10 +93,15 @@ export default function MealCategoriesWidget() {
             totalCalories: 0,
             protein: 0,
             carbs: 0,
-            fat: 0
+            fat: 0,
+            note: ""
         };
         setMeals([...meals, newMeal]);
     };
+    
+    const handleSaveNote = (mealId: string, newNote: string) => {
+        setMeals(meals.map(m => m.id === mealId ? { ...m, note: newNote } : m));
+    }
 
     return (
         <Card className="glass-card">
@@ -127,7 +177,7 @@ export default function MealCategoriesWidget() {
                                             <AccordionContent className="px-4 pb-4">
                                                 <div className="border-t border-muted-foreground/20 pt-4 space-y-4">
                                                     {meal.items.length === 0 ? (
-                                                        <div className="text-center text-sm text-muted-foreground py-4 border-2 border-dashed border-muted-foreground/20 rounded-lg">
+                                                        <div className="text-center text-sm text-muted-foreground py-4">
                                                             <p>Este calendário está vazio.</p>
                                                             <Button variant="link" className="mt-2">
                                                                 <PlusCircle className="mr-2 h-4 w-4" />
@@ -137,6 +187,7 @@ export default function MealCategoriesWidget() {
                                                     ) : (
                                                         <div>{/* List of foods will go here */}</div>
                                                     )}
+                                                     <MealNoteEditor note={meal.note} onSave={(newNote) => handleSaveNote(meal.id, newNote)} />
                                                 </div>
                                             </AccordionContent>
                                         </Card>
