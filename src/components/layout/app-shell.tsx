@@ -18,6 +18,7 @@ import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
 import { useState } from 'react';
 import { LogoutButton } from '@/components/auth/logout-button';
+import { useAppContext } from '@/app/context/AppContext';
 
 const navItems = [
   { href: '/', label: 'Dashboard', icon: LayoutDashboard },
@@ -30,6 +31,7 @@ const navItems = [
 
 function Header() {
   const pathname = usePathname();
+  const { profile } = useAppContext();
 
   return (
     <header className="fixed top-4 left-0 z-50 w-full px-4">
@@ -71,9 +73,9 @@ function Header() {
         <div className="flex items-center gap-2">
           <Link href="/profile">
               <Avatar className='h-10 w-10 border-2 border-transparent transition-all duration-300 hover:border-primary cursor-pointer'>
-              <AvatarImage src="https://github.com/shadcn.png" alt="@shadcn" />
+              <AvatarImage src={profile?.avatarUrl || undefined} alt={profile?.name || "User"} />
               <AvatarFallback>
-                  <Icons.Logo className="h-5 w-5" />
+                  <User className="h-5 w-5" />
               </AvatarFallback>
               </Avatar>
           </Link>

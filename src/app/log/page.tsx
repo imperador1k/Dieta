@@ -5,19 +5,25 @@ import { AppShell } from "@/components/layout/app-shell";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { BookCopy, PlusCircle, Search } from "lucide-react";
+import { BookCopy, PlusCircle, Search, Utensils, Edit3, Trash2 } from "lucide-react";
 import { DishEditor } from "@/components/dishes/dish-editor";
-import { Dish, FoodItemData } from "@/lib/types";
+import { Dish, FoodItemData, Meal } from "@/lib/types";
 import { useAppContext } from "@/app/context/AppContext";
 import { Skeleton } from "@/components/ui/skeleton";
 import { motion } from "framer-motion";
-import { CookingPot, Flame, Fish, Utensils, Wheat, Droplet, ChevronRight } from "lucide-react";
+import { CookingPot, Flame, Fish, Wheat, Droplet, ChevronRight } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 
 export default function LogPage() {
-    const { dishes, isDishesLoading } = useAppContext();
+    const { dishes, isDishesLoading, todaysMeals, deleteMeal, activePlan, activeVariationId, updateMealName } = useAppContext();
     const [isEditorOpen, setIsEditorOpen] = useState(false);
     const [dishToEdit, setDishToEdit] = useState<Dish | null>(null);
     const [searchTerm, setSearchTerm] = useState("");
+    const [isMealEditorOpen, setIsMealEditorOpen] = useState(false);
+    const [mealToEdit, setMealToEdit] = useState<Meal | null>(null);
+    const [editedMealName, setEditedMealName] = useState("");
 
     const openNewDishEditor = () => {
         setDishToEdit(null);
@@ -47,6 +53,35 @@ export default function LogPage() {
 
     const isLoading = isDishesLoading && dishes.length === 0;
 
+    // Function to handle meal deletion
+    const handleDeleteMeal = (mealId: string) => {
+        if (confirm('Tem a certeza que pretende eliminar esta refeição?')) {
+            deleteMeal(mealId);
+        }
+    };
+
+    // Function to open meal editor
+    const openEditMealEditor = (meal: Meal) => {
+        setMealToEdit(meal);
+        setEditedMealName(meal.name);
+        setIsMealEditorOpen(true);
+    };
+
+    // Function to save edited meal
+    const saveEditedMeal = () => {
+        if (mealToEdit && activeVariationId && editedMealName.trim() !== "") {
+            // Update the meal name in Firestore
+            updateMealName(mealToEdit.id, editedMealName.trim());
+            
+            // Close the dialog
+            setIsMealEditorOpen(false);
+            
+            // Reset the state
+            setMealToEdit(null);
+            setEditedMealName("");
+        }
+    };
+
     return (
         <AppShell>
             <DishEditor
@@ -54,7 +89,37 @@ export default function LogPage() {
                 onOpenChange={setIsEditorOpen}
                 dish={dishToEdit}
             />
-            <div className="max-w-4xl mx-auto">
+            
+            {/* Meal Editor Dialog */}
+            <Dialog open={isMealEditorOpen} onOpenChange={setIsMealEditorOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Editar Refeição</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                        <div>
+                            <Label htmlFor="mealName">Nome da Refeição</Label>
+                            <Input
+                                id="mealName"
+                                value={editedMealName}
+                                onChange={(e) => setEditedMealName(e.target.value)}
+                                placeholder="Nome da refeição"
+                            />
+                        </div>
+                        <div className="flex justify-end gap-2">
+                            <Button variant="outline" onClick={() => setIsMealEditorOpen(false)}>
+                                Cancelar
+                            </Button>
+                            <Button onClick={saveEditedMeal}>
+                                Guardar
+                            </Button>
+                        </div>
+                    </div>
+                </DialogContent>
+            </Dialog>
+            
+            <div className="max-w-4xl mx-auto space-y-8">
+                {/* Dishes Section */}
                 <Card className="glass-card">
                     <CardHeader className="flex flex-row items-center justify-between">
                         <div>
@@ -179,6 +244,80 @@ export default function LogPage() {
                                 </div>
                             )}
                         </div>
+                    </CardContent>
+                </Card>
+                
+                {/* Meals Section */}
+                <Card className="glass-card">
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2"><Utensils /> Refeições do Dia</CardTitle>
+                        <CardDescription>Veja e gira as suas refeições planeadas para hoje.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        {activePlan ? (
+                            todaysMeals.length === 0 ? (
+                                <div className="text-center text-muted-foreground py-16 border-2 border-dashed border-muted-foreground/20 rounded-lg">
+                                    <Utensils className="mx-auto h-12 w-12 text-muted-foreground/50" />
+                                    <h3 className="mt-4 text-lg font-semibold">Nenhuma refeição planeada</h3>
+                                    <p className="mt-2 text-sm">Adicione refeições no calendário de refeições.</p>
+                                    <Button className="mt-4" variant="outline" onClick={() => window.location.href = '/meals'}>
+                                        Ir para Calendário de Refeições
+                                    </Button>
+                                </div>
+                            ) : (
+                                <div className="space-y-4">
+                                    {todaysMeals.map(meal => {
+                                        const itemCount = meal.items.length;
+                                        return (
+                                            <motion.div
+                                                key={meal.id}
+                                                layout
+                                                initial={{ opacity: 0, y: 20 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl bg-gradient-to-br from-background/80 to-muted/40 border border-muted/50 shadow-sm gap-4"
+                                            >
+                                                <div className="flex items-center gap-4">
+                                                    <div className="p-2 rounded-lg bg-primary/10 text-primary flex-shrink-0">
+                                                        <Utensils className="h-5 w-5" />
+                                                    </div>
+                                                    <div className="min-w-0">
+                                                        <h3 className="font-bold text-lg text-foreground truncate">{meal.name}</h3>
+                                                        <p className="text-sm text-muted-foreground">
+                                                            {itemCount} {itemCount === 1 ? 'item' : 'items'}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                                <div className="flex items-center gap-2">
+                                                    <Button 
+                                                        variant="ghost" 
+                                                        size="icon"
+                                                        onClick={() => openEditMealEditor(meal)}
+                                                        className="h-9 w-9"
+                                                    >
+                                                        <Edit3 className="h-4 w-4" />
+                                                    </Button>
+                                                    <Button 
+                                                        variant="ghost" 
+                                                        size="icon"
+                                                        className="h-9 w-9 text-destructive hover:text-destructive hover:bg-destructive/10"
+                                                        onClick={() => handleDeleteMeal(meal.id)}
+                                                    >
+                                                        <Trash2 className="h-4 w-4" />
+                                                    </Button>
+                                                </div>
+                                            </motion.div>
+                                        );
+                                    })}
+                                </div>
+                            )
+                        ) : (
+                            <div className="text-center text-muted-foreground py-8">
+                                <p>Ative um plano para ver as suas refeições planeadas.</p>
+                                <Button className="mt-4" variant="outline" onClick={() => window.location.href = '/plan'}>
+                                    Ir para Planos
+                                </Button>
+                            </div>
+                        )}
                     </CardContent>
                 </Card>
             </div>

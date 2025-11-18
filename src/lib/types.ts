@@ -29,6 +29,8 @@ export interface Meal {
     fat: number;
     note?: string;
     eaten?: boolean;
+    date?: string; // Add date field for historical tracking
+    createdAt?: Date; // Add timestamp for ordering
 };
 
 export type Variation = {

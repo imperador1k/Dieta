@@ -1,4 +1,5 @@
 import { v2 as cloudinary } from 'cloudinary';
+import { Readable } from 'stream';
 
 // Only configure Cloudinary on the server side
 if (typeof window === 'undefined') {
@@ -18,6 +19,18 @@ export interface CloudinaryUploadResult {
 }
 
 /**
+ * Converts a buffer to a readable stream
+ * @param buffer The buffer to convert
+ * @returns A readable stream
+ */
+function bufferToStream(buffer: Buffer): Readable {
+  const readable = new Readable();
+  readable.push(buffer);
+  readable.push(null);
+  return readable;
+}
+
+/**
  * Uploads an image file to Cloudinary
  * @param file The image file to upload
  * @returns Promise with upload result containing URL and metadata
@@ -31,7 +44,7 @@ export async function uploadImageToCloudinary(file: File): Promise<CloudinaryUpl
   return new Promise((resolve, reject) => {
     const uploadStream = cloudinary.uploader.upload_stream(
       {
-        folder: 'dieta-evolution-photos',
+        folder: 'dieta-user-avatars',
         upload_preset: process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET,
         resource_type: 'image',
       },
@@ -52,15 +65,13 @@ export async function uploadImageToCloudinary(file: File): Promise<CloudinaryUpl
     );
     
     // Convert file to stream and pipe to Cloudinary
-    const reader = new FileReader();
-    reader.onload = () => {
-      const buffer = Buffer.from(reader.result as ArrayBuffer);
-      uploadStream.end(buffer);
-    };
-    reader.onerror = () => {
-      reject(new Error('Failed to read file'));
-    };
-    reader.readAsArrayBuffer(file);
+    file.arrayBuffer()
+      .then(arrayBuffer => {
+        const buffer = Buffer.from(arrayBuffer);
+        const stream = bufferToStream(buffer);
+        stream.pipe(uploadStream);
+      })
+      .catch(reject);
   });
 }
 

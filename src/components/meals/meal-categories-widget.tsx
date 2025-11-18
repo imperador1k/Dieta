@@ -5,7 +5,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { MoreVertical, PlusCircle, Utensils, Grape, Flame, Fish, Wheat, Droplet, StickyNote, Save, CookingPot, CheckCircle2, Circle } from "lucide-react";
+import { MoreVertical, PlusCircle, Utensils, Grape, Flame, Fish, Wheat, Droplet, StickyNote, Save, CookingPot, CheckCircle2, Circle, Trash2, Edit3 } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -13,6 +13,7 @@ import { Textarea } from "../ui/textarea";
 import { FoodSearchDialog } from "./food-search-dialog";
 import type { FoodItemData, Meal, MealItem, Dish } from "@/lib/types";
 import FoodItem from "./food-item";
+import { useAppContext } from '@/app/context/AppContext';
 
 const MacroBadge = ({ Icon, value, unit, className }: { Icon: React.ElementType, value: number, unit: string, className?: string }) => (
     <div className={cn("flex items-center gap-1.5 text-xs", className)}>
@@ -74,6 +75,10 @@ export default function MealCategoriesWidget({ meals, onMealsChange, savedDishes
     const [isSearchOpen, setIsSearchOpen] = useState(false);
     const [activeMealId, setActiveMealId] = useState<string | null>(null);
     const [foodToEdit, setFoodToEdit] = useState<FoodItemData | null>(null);
+    const [editingMealId, setEditingMealId] = useState<string | null>(null);
+    const [editingMealName, setEditingMealName] = useState("");
+
+    const { deleteMeal, updateMealName } = useAppContext();
 
     const addMealCategory = () => {
         const newMeal: Meal = {
@@ -87,6 +92,16 @@ export default function MealCategoriesWidget({ meals, onMealsChange, savedDishes
             note: ""
         };
         onMealsChange([...meals, newMeal]);
+    };
+
+    const handleDeleteMeal = (mealId: string) => {
+        if (confirm('Tem a certeza que pretende eliminar esta refeição?')) {
+            deleteMeal(mealId);
+            
+            // Update local state to remove the meal
+            const updatedMeals = meals.filter(meal => meal.id !== mealId);
+            onMealsChange(updatedMeals);
+        }
     };
     
     const handleSaveNote = (mealId: string, newNote: string) => {
@@ -261,6 +276,32 @@ export default function MealCategoriesWidget({ meals, onMealsChange, savedDishes
         onMealsChange(updatedMeals);
     }
 
+    // Function to start editing a meal name
+    const startEditingMealName = (mealId: string, currentName: string) => {
+        setEditingMealId(mealId);
+        setEditingMealName(currentName);
+    };
+
+    // Function to save edited meal name
+    const saveEditedMealName = (mealId: string) => {
+        if (editingMealName.trim() !== "") {
+            updateMealName(mealId, editingMealName.trim());
+            // Update local state as well
+            const updatedMeals = meals.map(meal => 
+                meal.id === mealId ? { ...meal, name: editingMealName.trim() } : meal
+            );
+            onMealsChange(updatedMeals);
+        }
+        setEditingMealId(null);
+        setEditingMealName("");
+    };
+
+    // Function to cancel editing
+    const cancelEditing = () => {
+        setEditingMealId(null);
+        setEditingMealName("");
+    };
+
     return (
         <>
             <FoodSearchDialog
@@ -337,9 +378,37 @@ export default function MealCategoriesWidget({ meals, onMealsChange, savedDishes
                                                         <div className="flex flex-col sm:flex-row sm:items-center sm:gap-4 flex-1 w-full">
                                                             <div className="flex items-center gap-3">
                                                                 <Grape className="w-6 h-6 text-primary" />
-                                                                <span className="truncate">{meal.name}</span>
+                                                                {editingMealId === meal.id ? (
+                                                                    <div className="flex items-center gap-2">
+                                                                        <input
+                                                                            type="text"
+                                                                            value={editingMealName}
+                                                                            onChange={(e) => setEditingMealName(e.target.value)}
+                                                                            onKeyDown={(e) => {
+                                                                                if (e.key === 'Enter') {
+                                                                                    saveEditedMealName(meal.id);
+                                                                                } else if (e.key === 'Escape') {
+                                                                                    cancelEditing();
+                                                                                }
+                                                                            }}
+                                                                            onBlur={() => saveEditedMealName(meal.id)}
+                                                                            className="bg-background border border-input rounded-md px-2 py-1 text-sm"
+                                                                            autoFocus
+                                                                        />
+                                                                        <Button 
+                                                                            size="sm" 
+                                                                            variant="ghost" 
+                                                                            onClick={() => saveEditedMealName(meal.id)}
+                                                                            className="h-6 w-6 p-0"
+                                                                        >
+                                                                            <Save className="h-4 w-4" />
+                                                                        </Button>
+                                                                    </div>
+                                                                ) : (
+                                                                    <span className="truncate">{meal.name}</span>
+                                                                )}
                                                             </div>
-                                                            <div className="flex items-center gap-4 text-sm text-muted-foreground sm:ml-auto pl-9 sm:pl-0 mt-1 sm:mt-0">
+                                                            <div className="flex items-center gap-4 text-sm text-muted-foreground sm:ml-auto sm:pl-0 mt-1 sm:mt-0">
                                                                 <MacroBadge Icon={Flame} value={meal.totalCalories} unit="kcal" className="text-foreground font-semibold" />
                                                                 <MacroBadge Icon={Fish} value={meal.protein} unit="g" className="text-chart-1" />
                                                                 <MacroBadge Icon={Wheat} value={meal.carbs} unit="g" className="text-chart-2" />
@@ -347,9 +416,60 @@ export default function MealCategoriesWidget({ meals, onMealsChange, savedDishes
                                                             </div>
                                                         </div>
                                                     </AccordionTrigger>
+                                                    {/* Buttons on desktop */}
+                                                    <div className="hidden sm:flex items-center gap-1">
+                                                        {editingMealId !== meal.id && (
+                                                            <Button 
+                                                                variant="ghost" 
+                                                                size="icon"
+                                                                onClick={() => startEditingMealName(meal.id, meal.name)}
+                                                                className="h-8 w-8"
+                                                            >
+                                                                <Edit3 className="h-4 w-4" />
+                                                            </Button>
+                                                        )}
+                                                        <Button 
+                                                            variant="ghost" 
+                                                            size="icon" 
+                                                            className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                handleDeleteMeal(meal.id);
+                                                            }}
+                                                        >
+                                                            <Trash2 className="h-4 w-4" />
+                                                        </Button>
+                                                    </div>
+                                                    {/* Buttons on mobile - inside the accordion content */}
                                                 </div>
                                                 <AccordionContent className="px-4 pb-4">
                                                     <div className="border-t border-muted-foreground/20 pt-4 space-y-4">
+                                                        {/* Buttons on mobile - inside the accordion content */}
+                                                        <div className="sm:hidden flex justify-end gap-1">
+                                                            {editingMealId !== meal.id && (
+                                                                <Button 
+                                                                    variant="ghost" 
+                                                                    size="sm"
+                                                                    onClick={() => startEditingMealName(meal.id, meal.name)}
+                                                                    className="h-8 px-2"
+                                                                >
+                                                                    <Edit3 className="h-4 w-4 mr-1" />
+                                                                    Editar
+                                                                </Button>
+                                                            )}
+                                                            <Button 
+                                                                variant="ghost" 
+                                                                size="sm"
+                                                                className="h-8 px-2 text-destructive hover:text-destructive hover:bg-destructive/10"
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    handleDeleteMeal(meal.id);
+                                                                }}
+                                                            >
+                                                                <Trash2 className="h-4 w-4 mr-1" />
+                                                                Eliminar
+                                                            </Button>
+                                                        </div>
                                                         <div className="space-y-2">
                                                             <AnimatePresence>
                                                                 {meal.items.map(item => (

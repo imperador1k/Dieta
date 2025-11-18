@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { createContext, useContext, useState, ReactNode, useEffect, useMemo } from 'react';
@@ -23,6 +24,11 @@ type ConsumedTotals = {
 
 type MealsByVariation = {
     [variationId: string]: Meal[];
+}
+
+// Add new type for historical meals
+type HistoricalMeals = {
+  [date: string]: Meal[]; // date as key, meals as value
 }
 
 // App Context
@@ -63,11 +69,19 @@ interface AppContextType {
     mealsByVariation: MealsByVariation;
     isMealsLoading: boolean;
     setMealsForVariation: (variationId: string, meals: Meal[]) => void;
+    deleteMeal: (mealId: string) => void;
+    updateMealName: (mealId: string, newName: string) => void;
     activeVariationId: string | undefined;
     setActiveVariationId: React.Dispatch<React.SetStateAction<string | undefined>>;
     todaysMeals: Meal[];
     toggleMealItemEaten: (mealId: string, itemId: string, newEatenState: boolean) => void;
+    toggleAllMealItemsEaten: (mealId: string, newEatenState: boolean) => void;
     consumedTotals: ConsumedTotals;
+
+    // Add historical meals data
+    historicalMeals: HistoricalMeals;
+    isHistoricalMealsLoading: boolean;
+    loadHistoricalMeals: (variationId: string, startDate: Date, endDate: Date) => Promise<HistoricalMeals>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -221,7 +235,21 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         });
     };
 
-     useEffect(() => {
+    // Add function to delete individual meals
+    const deleteMeal = (mealId: string) => {
+        if (!user || !activeVariationId) return;
+        const mealRef = doc(firestore, `users/${user.uid}/dailyLogs/${activeVariationId}/meals/${mealId}`);
+        deleteDocumentNonBlocking(mealRef);
+    };
+
+    // Add function to update meal name
+    const updateMealName = (mealId: string, newName: string) => {
+        if (!user || !activeVariationId) return;
+        const mealRef = doc(firestore, `users/${user.uid}/dailyLogs/${activeVariationId}/meals/${mealId}`);
+        updateDocumentNonBlocking(mealRef, { name: newName });
+    };
+
+    useEffect(() => {
         if (activePlan && activePlan.variations.length > 0) {
             const currentVariationStillExists = activePlan.variations.some(v => v.id === activeVariationId);
             if (!currentVariationStillExists) {
@@ -259,7 +287,29 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         const mealRef = doc(firestore, `users/${user.uid}/dailyLogs/${activeVariationId}/meals/${mealId}`);
         updateDocumentNonBlocking(mealRef, updatedMeal);
     };
-    
+
+    // New function to toggle all items in a meal at once
+    const toggleAllMealItemsEaten = (mealId: string, newEatenState: boolean) => {
+        if (!activeVariationId || !user) return;
+        
+        const mealToUpdate = todaysMeals.find(m => m.id === mealId);
+        if (!mealToUpdate) return;
+        
+        // Update all items in the meal to the new eaten state
+        const updatedItems = mealToUpdate.items.map(item => {
+          const updatedItem = { ...item, eaten: newEatenState };
+          if (updatedItem.type === 'dish') {
+            updatedItem.ingredients = updatedItem.ingredients.map(ing => ({ ...ing, eaten: newEatenState }));
+          }
+          return updatedItem;
+        });
+        
+        // Update the entire meal with all items updated
+        const updatedMeal = { ...mealToUpdate, items: updatedItems };
+        const mealRef = doc(firestore, `users/${user.uid}/dailyLogs/${activeVariationId}/meals/${mealId}`);
+        updateDocumentNonBlocking(mealRef, updatedMeal);
+      };
+
     const consumedTotals: ConsumedTotals = useMemo(() => {
         const totals: ConsumedTotals = { calories: 0, protein: 0, carbs: 0, fat: 0 };
         if (!todaysMeals) return totals;
@@ -290,6 +340,38 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         return totals;
     }, [todaysMeals]);
 
+    // --- Historical Meals Data ---
+    const [historicalMeals, setHistoricalMeals] = useState<HistoricalMeals>({});
+    const [isHistoricalMealsLoading, setIsHistoricalMealsLoading] = useState(false);
+  
+    // Function to load historical meals for a date range
+    const loadHistoricalMeals = async (variationId: string, startDate: Date, endDate: Date) => {
+      if (!user) return {};
+      
+      setIsHistoricalMealsLoading(true);
+      try {
+        // Create an array of dates between start and end date
+        const dates: string[] = [];
+        const currentDate = new Date(startDate);
+        
+        while (currentDate <= endDate) {
+          dates.push(currentDate.toISOString().split('T')[0]); // Format as YYYY-MM-DD
+          currentDate.setDate(currentDate.getDate() + 1);
+        }
+        
+        // For each date, we would fetch meals from Firestore
+        // This is a simplified implementation - in a real app, you'd batch these requests
+        const newHistoricalMeals: HistoricalMeals = {};
+        
+        // For now, we'll just return an empty object - in a real implementation, you'd fetch from Firestore
+        return newHistoricalMeals;
+      } catch (error) {
+        console.error('Error loading historical meals:', error);
+        return {};
+      } finally {
+        setIsHistoricalMealsLoading(false);
+      }
+    };
 
     const value = {
         profile: profile || null,
@@ -317,11 +399,17 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         mealsByVariation,
         isMealsLoading: isUserLoading || isMealsLoading,
         setMealsForVariation,
+        deleteMeal,
+        updateMealName,
         activeVariationId,
         setActiveVariationId,
         todaysMeals,
         toggleMealItemEaten,
+        toggleAllMealItemsEaten,
         consumedTotals,
+        historicalMeals,
+        isHistoricalMealsLoading,
+        loadHistoricalMeals,
     };
 
     return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

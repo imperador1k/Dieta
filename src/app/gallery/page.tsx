@@ -15,17 +15,18 @@ import {
   SelectValue 
 } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
-import { Calendar, Filter, Search, X } from 'lucide-react';
+import { Label } from '@/components/ui/label';
+import { Calendar, Filter, Search, X, Upload, CheckCircle, CloudUpload } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { pt } from 'date-fns/locale';
 import { Button } from '@/components/ui/button';
 import { 
   Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
+   SheetContent,
+   SheetDescription,
+   SheetHeader,
+   SheetTitle,
+   SheetTrigger,
 } from "@/components/ui/sheet";
 import {
   Dialog,
@@ -34,6 +35,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { motion, AnimatePresence } from 'framer-motion';
 
 export default function GalleryPage() {
   const { photos, addPhoto, deletePhoto } = useAppContext();
@@ -48,6 +50,7 @@ export default function GalleryPage() {
   const [pendingPhoto, setPendingPhoto] = useState<{ file: File; uploadResult: any } | null>(null);
   const [weightInput, setWeightInput] = useState<string>('');
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
 
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -109,12 +112,24 @@ export default function GalleryPage() {
       
       try {
         setIsUploading(true);
+        setUploadProgress(0);
         
         // Show loading state
         toast({
           title: "A carregar foto...",
           description: "A sua foto está a ser carregada para a nuvem.",
         });
+        
+        // Simulate progress for better UX
+        const progressInterval = setInterval(() => {
+          setUploadProgress(prev => {
+            if (prev >= 90) {
+              clearInterval(progressInterval);
+              return prev;
+            }
+            return prev + 10;
+          });
+        }, 200);
         
         // Upload to Cloudinary via API route
         const formData = new FormData();
@@ -124,6 +139,10 @@ export default function GalleryPage() {
           method: 'POST',
           body: formData,
         });
+        
+        // Complete the progress
+        clearInterval(progressInterval);
+        setUploadProgress(100);
         
         if (!response.ok) {
           throw new Error('Failed to upload image');
@@ -147,6 +166,7 @@ export default function GalleryPage() {
         });
       } finally {
         setIsUploading(false);
+        setUploadProgress(0);
         
         // Reset file input to allow re-uploading the same file
         if (e.target) { 
@@ -283,8 +303,118 @@ export default function GalleryPage() {
         onAddPhoto={handleAddPhotoClick}
       />
       
+      {/* Animated Upload Overlay */}
+      <AnimatePresence>
+        {isUploading && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center"
+          >
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.8, opacity: 0 }}
+              transition={{ type: "spring", stiffness: 300, damping: 20 }}
+              className="bg-gradient-to-br from-background to-muted p-8 rounded-2xl shadow-2xl border border-border max-w-md w-full mx-4 text-center"
+            >
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+                className="relative mb-6"
+              >
+                <div className="absolute inset-0 bg-primary/20 rounded-full blur-xl animate-pulse"></div>
+                <motion.div
+                  animate={{ 
+                    scale: [1, 1.1, 1],
+                    rotate: [0, 10, -10, 0]
+                  }}
+                  transition={{ 
+                    duration: 2,
+                    repeat: Infinity,
+                    repeatType: "reverse"
+                  }}
+                  className="relative bg-primary/10 p-6 rounded-full inline-flex"
+                >
+                  <CloudUpload className="h-16 w-16 text-primary" />
+                </motion.div>
+              </motion.div>
+              
+              <motion.h2
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.3 }}
+                className="text-2xl font-bold text-foreground mb-2"
+              >
+                A carregar foto...
+              </motion.h2>
+              
+              <motion.p
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.4 }}
+                className="text-muted-foreground mb-6"
+              >
+                A sua foto está a ser carregada para a nuvem
+              </motion.p>
+              
+              <motion.div
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.5 }}
+                className="w-full bg-muted rounded-full h-3 mb-4 overflow-hidden"
+              >
+                <motion.div
+                  className="h-full bg-primary rounded-full"
+                  initial={{ width: 0 }}
+                  animate={{ width: `${uploadProgress}%` }}
+                  transition={{ duration: 0.5, ease: "easeOut" }}
+                />
+              </motion.div>
+              
+              <motion.p
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.6 }}
+                className="text-sm text-muted-foreground"
+              >
+                {uploadProgress}% concluído
+              </motion.p>
+              
+              <motion.div
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.7 }}
+                className="mt-6 flex justify-center"
+              >
+                <motion.div
+                  animate={{ 
+                    rotate: 360,
+                    scale: [1, 1.1, 1]
+                  }}
+                  transition={{ 
+                    rotate: { duration: 1, repeat: Infinity, ease: "linear" },
+                    scale: { duration: 1.5, repeat: Infinity, repeatType: "reverse" }
+                  }}
+                  className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full"
+                />
+              </motion.div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+      
       {/* Weight Input Modal */}
-      <Dialog open={isWeightModalOpen} onOpenChange={setIsWeightModalOpen}>
+      <Dialog open={isWeightModalOpen} onOpenChange={(open) => {
+        setIsWeightModalOpen(open);
+        if (!open) {
+          // Reset state when closing the modal
+          setPendingPhoto(null);
+          setWeightInput('');
+        }
+      }}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
             <DialogTitle>Qual é o seu peso nesta foto?</DialogTitle>
@@ -294,6 +424,9 @@ export default function GalleryPage() {
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="weight" className="text-right">
+                Peso
+              </Label>
               <Input
                 id="weight"
                 type="number"
@@ -301,17 +434,27 @@ export default function GalleryPage() {
                 placeholder="Peso"
                 value={weightInput}
                 onChange={(e) => setWeightInput(e.target.value)}
-                className="col-span-3"
+                className="col-span-2"
                 min="0"
                 step="0.1"
+                autoFocus
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    handleWeightSubmit();
+                  }
+                }}
               />
               <span className="text-sm font-medium">kg</span>
             </div>
             {photos.length > 0 && (
-              <p className="text-sm text-muted-foreground">
-                O peso da sua última foto foi {photos[0].weight} kg
-              </p>
+              <div className="text-sm text-muted-foreground bg-muted/50 p-3 rounded-lg">
+                <p className="font-medium mb-1">Dica:</p>
+                <p>O peso da sua última foto foi <span className="font-semibold">{photos[0].weight} kg</span></p>
+              </div>
             )}
+            <div className="text-sm text-muted-foreground">
+              <p>Por favor, introduza o seu peso real nesta data para um acompanhamento preciso.</p>
+            </div>
           </div>
           <div className="flex justify-end gap-2">
             <Button
@@ -324,7 +467,12 @@ export default function GalleryPage() {
             >
               Cancelar
             </Button>
-            <Button onClick={handleWeightSubmit}>Guardar Foto</Button>
+            <Button 
+              onClick={handleWeightSubmit}
+              disabled={!weightInput || parseFloat(weightInput) <= 0}
+            >
+              Guardar Foto
+            </Button>
           </div>
         </DialogContent>
       </Dialog>

@@ -7,18 +7,9 @@ import { Area, AreaChart, Bar, BarChart, CartesianGrid, XAxis, YAxis, Cell } fro
 import { format } from 'date-fns';
 import { pt } from 'date-fns/locale';
 import { BodyMeasurement } from "@/lib/types";
-import { useMemo } from "react";
-
-// Mock Data for adherence, in a real app this would be fetched
-const adherenceData = [
-  { date: "2024-05-01", calories: 2250, target: 2200 },
-  { date: "2024-05-02", calories: 2180, target: 2200 },
-  { date: "2024-05-03", calories: 2350, target: 2200 },
-  { date: "2024-05-04", calories: 2100, target: 2200 },
-  { date: "2024-05-05", calories: 2210, target: 2200 },
-  { date: "2024-05-06", calories: 2050, target: 2200 },
-  { date: "2024-05-07", calories: 2450, target: 2200 },
-];
+import { useMemo, useEffect, useState } from "react";
+import { useAppContext } from "@/app/context/AppContext";
+import { useUser } from "@/firebase";
 
 const bodyTrendsConfig = {
   weight: { label: "Peso", color: "hsl(var(--chart-1))", icon: Weight },
@@ -42,40 +33,63 @@ const getBarColor = (value: number, target: number) => {
   const hue = 258 - (258 * percentageOver);
   const saturation = 100 - (37 * percentageOver); // From 100% to 63%
   const lightness = 80 - (49 * percentageOver); // From 80% to 31%
-
+  
   return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
-}
-
+};
 
 export default function ProgressCharts({ measurements }: { measurements: BodyMeasurement[] }) {
-    
-    // Calculate body fat for each measurement - this should be done in a separate utility in a real app
-    const bodyTrendsData = useMemo(() => measurements.map(m => {
-        // A real implementation would get gender and height from user profile
-        const heightInMeters = 180 / 100;
-        let bodyFat = 0;
-        if (m.neck && m.waist && heightInMeters) {
-            // Simplified US Navy formula for demonstration
-             bodyFat = 495 / (1.0324 - 0.19077 * Math.log10(m.waist - m.neck) + 0.15456 * Math.log10(heightInMeters * 100)) - 450;
-        }
+  const { activePlan, consumedTotals } = useAppContext();
+  const { user } = useUser();
+  const [adherenceData, setAdherenceData] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
-        return {
-            date: m.date,
-            weight: m.weight,
-            bodyFat: bodyFat > 0 ? bodyFat : undefined,
-        }
-    }), [measurements]);
-
-
-    if (measurements.length < 2) {
-        return (
-            <div className="flex flex-col items-center justify-center text-center py-20 border-2 border-dashed border-muted-foreground/20 rounded-lg">
-                <BarChart3 className="mx-auto h-12 w-12 text-muted-foreground/50" />
-                <h3 className="mt-4 text-lg font-semibold">Dados Insuficientes</h3>
-                <p className="mt-2 text-sm text-muted-foreground">Adicione pelo menos duas medições para ver os seus gráficos de progresso.</p>
-            </div>
-        )
+  // Calculate body fat for each measurement
+  const bodyTrendsData = useMemo(() => measurements.map(m => {
+    // A real implementation would get gender and height from user profile
+    const heightInMeters = 180 / 100;
+    let bodyFat = 0;
+    if (m.neck && m.waist && heightInMeters) {
+      // Simplified US Navy formula for demonstration
+       bodyFat = 495 / (1.0324 - 0.19077 * Math.log10(m.waist - m.neck) + 0.15456 * Math.log10(heightInMeters * 100)) - 450;
     }
+
+    return {
+      date: m.date,
+      weight: m.weight,
+      bodyFat: bodyFat > 0 ? bodyFat : undefined,
+    }
+  }), [measurements]);
+
+  // Create adherence data based on today's consumption
+  const todayAdherenceData = useMemo(() => {
+    if (!activePlan) return [];
+    
+    const today = new Date().toISOString().split('T')[0];
+    
+    return [{
+      date: today,
+      calories: consumedTotals.calories,
+      target: activePlan.targets.calories,
+      protein: consumedTotals.protein,
+      carbs: consumedTotals.carbs,
+      fat: consumedTotals.fat
+    }];
+  }, [activePlan, consumedTotals]);
+
+  // For now, we'll use today's data until we implement historical data fetching
+  useEffect(() => {
+    setAdherenceData(todayAdherenceData);
+  }, [todayAdherenceData]);
+
+  if (measurements.length < 2) {
+    return (
+      <div className="flex flex-col items-center justify-center text-center py-20 border-2 border-dashed border-muted-foreground/20 rounded-lg">
+        <BarChart3 className="mx-auto h-12 w-12 text-muted-foreground/50" />
+        <h3 className="mt-4 text-lg font-semibold">Dados Insuficientes</h3>
+        <p className="mt-2 text-sm text-muted-foreground">Adicione pelo menos duas medições para ver os seus gráficos de progresso.</p>
+      </div>
+    )
+  }
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
@@ -115,53 +129,63 @@ export default function ProgressCharts({ measurements }: { measurements: BodyMea
           <CardDescription>Consistência diária em relação à sua meta de calorias.</CardDescription>
         </CardHeader>
         <CardContent>
-          <ChartContainer config={adherenceConfig} className="h-64 w-full">
-            <BarChart data={adherenceData} margin={{ left: -20, right: 10, top: 10 }}>
-              <CartesianGrid vertical={false} strokeDasharray="3 3" className="stroke-border/50" />
-              <XAxis dataKey="date" tickFormatter={formatDate} tickLine={false} axisLine={false} tickMargin={10} />
-              <YAxis tickLine={false} axisLine={false} />
-              <ChartTooltip 
-                cursor={{ fill: "hsl(var(--muted)/0.5)" }} 
-                content={<ChartTooltipContent
-                    formatter={(value, name, props) => {
-                        const { payload } = props;
-                        if (name === 'calories') {
-                            return (
-                                <>
-                                    <div>
-                                        <span className="font-semibold">Consumido: </span>
-                                        <span>{value} kcal</span>
-                                    </div>
-                                    <div>
-                                        <span className="font-semibold">Meta: </span>
-                                        <span>{payload.target} kcal</span>
-                                    </div>
-                                </>
-                            )
-                        }
-                        return null
-                    }}
-                />} 
-              />
-              <Bar
-                dataKey="calories"
-                name="calorias"
-                radius={[8, 8, 0, 0]}
-                barSize={30}
-              >
-                {adherenceData.map((entry, index) => (
-                  <Cell 
-                    key={`cell-${index}`}
-                    fill={getBarColor(entry.calories, entry.target)}
-                    className="transition-opacity"
-                    opacity={0.8}
-                    onMouseOver={(e) => e.currentTarget.style.opacity = '1'}
-                    onMouseOut={(e) => e.currentTarget.style.opacity = '0.8'}
-                  />
-                ))}
-              </Bar>
-            </BarChart>
-          </ChartContainer>
+          {isLoading ? (
+            <div className="flex items-center justify-center h-64">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            </div>
+          ) : (
+            <ChartContainer config={adherenceConfig} className="h-64 w-full">
+              <BarChart data={adherenceData} margin={{ left: -20, right: 10, top: 10 }}>
+                <CartesianGrid vertical={false} strokeDasharray="3 3" className="stroke-border/50" />
+                <XAxis dataKey="date" tickFormatter={formatDate} tickLine={false} axisLine={false} tickMargin={10} />
+                <YAxis tickLine={false} axisLine={false} />
+                <ChartTooltip 
+                  cursor={{ fill: "hsl(var(--muted)/0.5)" }} 
+                  content={<ChartTooltipContent
+                      formatter={(value, name, props) => {
+                          const { payload } = props;
+                          if (name === 'calories') {
+                              return (
+                                  <>
+                                      <div>
+                                          <span className="font-semibold">Consumido: </span>
+                                          <span>{Math.round(value as number)} kcal</span>
+                                      </div>
+                                      <div>
+                                          <span className="font-semibold">Meta: </span>
+                                          <span>{payload.target} kcal</span>
+                                      </div>
+                                      <div className="mt-1">
+                                          <span className="font-semibold">Diferença: </span>
+                                          <span>{Math.round((value as number) - payload.target)} kcal</span>
+                                      </div>
+                                  </>
+                              )
+                          }
+                          return null
+                      }}
+                  />} 
+                />
+                <Bar
+                  dataKey="calories"
+                  name="calorias"
+                  radius={[8, 8, 0, 0]}
+                  barSize={30}
+                >
+                  {adherenceData.map((entry, index) => (
+                    <Cell 
+                      key={`cell-${index}`}
+                      fill={getBarColor(entry.calories, entry.target)}
+                      className="transition-opacity"
+                      opacity={0.8}
+                      onMouseOver={(e) => e.currentTarget.style.opacity = '1'}
+                      onMouseOut={(e) => e.currentTarget.style.opacity = '0.8'}
+                    />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ChartContainer>
+          )}
         </CardContent>
       </Card>
     </div>
