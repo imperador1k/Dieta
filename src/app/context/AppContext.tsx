@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, ReactNode, useEffect, useMemo } from 'react';
-import type { Plan, Dish, BodyMeasurement, UserProfile, Variation, Meal, MealItem, FoodItemData } from '@/lib/types';
+import type { Plan, Dish, BodyMeasurement, UserProfile, Variation, Meal, MealItem, FoodItemData, EvolutionPhoto } from '@/lib/types';
 import { useCollection, useDoc, useFirebase } from '@/firebase';
 import { collection, doc, orderBy, query } from 'firebase/firestore';
 import { 
@@ -18,6 +18,7 @@ type ConsumedTotals = {
     protein: number;
     carbs: number;
     fat: number;
+
 }
 
 type MealsByVariation = {
@@ -37,6 +38,7 @@ interface AppContextType {
     activePlan: Plan | undefined;
     setActivePlan: (planId: string) => void;
     updatePlanVariations: (planId: string, newVariations: Variation[]) => void;
+    updatePlan: (planId: string, updatedPlan: Partial<Plan>) => void;
 
     // Dishes
     dishes: Dish[];
@@ -48,11 +50,14 @@ interface AppContextType {
     measurements: BodyMeasurement[];
     isMeasurementsLoading: boolean;
     saveMeasurement: (measurement: BodyMeasurement) => void;
-    
+    deleteMeasurement: (measurementDate: string) => void;
+
     // Photos
-    photos: any[]; // Replace with EvolutionPhoto[] when implemented with Firestore
+    photos: EvolutionPhoto[];
     isPhotosLoading: boolean;
-    setPhotos: (photos: any[]) => void;
+    setPhotos: (newPhotos: EvolutionPhoto[]) => void;
+    addPhoto: (photo: EvolutionPhoto) => void;
+    deletePhoto: (photoId: string, publicId?: string) => Promise<void>;
 
     // Meals
     mealsByVariation: MealsByVariation;
@@ -70,13 +75,41 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 export const AppProvider = ({ children }: { children: ReactNode }) => {
     const { user, isUserLoading, firestore } = useFirebase();
 
+    // Redirect to login if user is not authenticated
+    useEffect(() => {
+        if (!isUserLoading && !user) {
+            // In a real app, you would redirect to the login page
+            // For now, we'll just log to console
+            console.log('User not authenticated, redirecting to login');
+        }
+    }, [user, isUserLoading]);
+
     // --- Profile Data ---
     const profileRef = useMemoFirebase(() => user ? doc(firestore, `users/${user.uid}`) : null, [user, firestore]);
     const { data: profile, isLoading: isProfileLoading } = useDoc<UserProfile>(profileRef);
 
+    // Create initial profile when user logs in for the first time (only if no profile exists)
+    useEffect(() => {
+        if (user && !isUserLoading && !isProfileLoading && profileRef) {
+            // Check if profile already exists
+            if (!profile) {
+                // Only create basic profile with essential fields
+                // Don't set name, age, height, or gender to default values as this may overwrite user data
+                const initialProfile: Partial<UserProfile> = {
+                    email: user.email || ''
+                    // Note: We don't set name, age, height, or gender here to avoid overwriting user data
+                };
+                
+                // Use setDocumentNonBlocking to create the document if it doesn't exist
+                setDocumentNonBlocking(profileRef, initialProfile, { merge: true });
+            }
+        }
+    }, [user, profile, isProfileLoading, isUserLoading, profileRef]);
+
     const saveProfile = (newProfileData: Partial<UserProfile>) => {
         if (profileRef) {
-            updateDocumentNonBlocking(profileRef, newProfileData);
+            // Use setDocumentNonBlocking with merge to handle both create and update cases
+            setDocumentNonBlocking(profileRef, newProfileData, { merge: true });
         }
     };
     
@@ -85,17 +118,23 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     const { data: plans, isLoading: isPlansLoading } = useCollection<Plan>(plansRef);
 
     const setActivePlan = (planId: string) => {
-        if (!plans) return;
+        if (!plans || !user) return;
         plans.forEach(p => {
-            const planDocRef = doc(firestore, `users/${user!.uid}/userGoals/${p.id}`);
+            const planDocRef = doc(firestore, `users/${user.uid}/userGoals/${p.id}`);
             updateDocumentNonBlocking(planDocRef, { isActive: p.id === planId });
         });
     };
     
     const updatePlanVariations = (planId: string, newVariations: Variation[]) => {
-        if (!user) return;
+        if (!user || newVariations.length === 0) return;
         const planDocRef = doc(firestore, `users/${user.uid}/userGoals/${planId}`);
         updateDocumentNonBlocking(planDocRef, { variations: newVariations });
+    };
+    
+    const updatePlan = (planId: string, updatedPlan: Partial<Plan>) => {
+        if (!user) return;
+        const planDocRef = doc(firestore, `users/${user.uid}/userGoals/${planId}`);
+        updateDocumentNonBlocking(planDocRef, updatedPlan);
     };
 
     const activePlan = useMemo(() => plans?.find(p => p.isActive), [plans]);
@@ -128,10 +167,39 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         setDocumentNonBlocking(measurementRef, measurement, { merge: true });
     };
 
-    // --- Photos Data (Placeholder) ---
-    // TODO: Implement with Firebase Storage and Firestore
-    const [photos, setPhotos] = useState([]); 
-    const isPhotosLoading = false;
+    // Add a function to delete measurements
+    const deleteMeasurement = (measurementDate: string) => {
+        if (!user) return;
+        // Generate the document ID based on the date
+        const docId = new Date(measurementDate).toISOString().split('T')[0];
+        const measurementRef = doc(firestore, `users/${user.uid}/bodyMetrics`, docId);
+        deleteDocumentNonBlocking(measurementRef);
+    };
+
+    // --- Photos Data ---
+    const photosRef = useMemoFirebase(() => user ? collection(firestore, `users/${user.uid}/evolutionPhotos`) : null, [user, firestore]);
+    const { data: photos, isLoading: isPhotosLoading } = useCollection<EvolutionPhoto>(photosRef);
+
+    const addPhoto = (photo: EvolutionPhoto) => {
+        if (!user) return;
+        const photoRef = doc(firestore, `users/${user.uid}/evolutionPhotos/${photo.id}`);
+        setDocumentNonBlocking(photoRef, photo, { merge: true });
+    };
+
+    const deletePhoto = async (photoId: string, publicId?: string) => {
+        if (!user) return;
+        
+        // Delete from Firestore
+        const photoRef = doc(firestore, `users/${user.uid}/evolutionPhotos/${photoId}`);
+        deleteDocumentNonBlocking(photoRef);
+    };
+
+    const setPhotos = (newPhotos: EvolutionPhoto[]) => {
+        // This is for backward compatibility, but we should use addPhoto/deletePhoto instead
+        newPhotos.forEach(photo => {
+            addPhoto(photo);
+        });
+    };
 
     // --- Meals Data ---
     const [activeVariationId, setActiveVariationId] = useState<string | undefined>();
@@ -232,6 +300,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         activePlan,
         setActivePlan,
         updatePlanVariations,
+        updatePlan,
         dishes: dishes || [],
         isDishesLoading: isUserLoading || isDishesLoading,
         saveDish,
@@ -239,9 +308,12 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         measurements: measurements || [],
         isMeasurementsLoading: isUserLoading || isMeasurementsLoading,
         saveMeasurement,
+        deleteMeasurement,
         photos: photos || [],
         isPhotosLoading: isUserLoading || isPhotosLoading,
         setPhotos,
+        addPhoto,
+        deletePhoto,
         mealsByVariation,
         isMealsLoading: isUserLoading || isMealsLoading,
         setMealsForVariation,

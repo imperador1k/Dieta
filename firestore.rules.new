@@ -59,6 +59,11 @@ service cloud.firestore {
              value <= maxValue;
     }
     
+    // Rate limiting function (basic implementation)
+    function isWithinRateLimit() {
+      return request.time.toMillis() - request.resource.data.lastUpdated.toMillis() > 1000; // 1 second between updates
+    }
+    
     /**
      * @description Allows users to read and write their own user profile.
      * @path /users/{userId}
@@ -298,7 +303,57 @@ service cloud.firestore {
           
           // Validate items array if present
           (!('items' in request.resource.data) || (
-            request.resource.data.items is list
+            request.resource.data.items is list &&
+            // Validate each item in the array
+            request.resource.data.items.all(item => 
+              item is map &&
+              ('id' in item) &&
+              ('type' in item) &&
+              (item.type in ['food', 'dish']) &&
+              ('name' in item) &&
+              ('servingSize' in item) &&
+              ('nutrients' in item) &&
+              isValidString(item.id, 1, 100) &&
+              isValidString(item.name, 1, 100) &&
+              isValidNumber(item.servingSize, 0, 10000) &&
+              item.nutrients is map &&
+              ('calories' in item.nutrients) &&
+              ('protein' in item.nutrients) &&
+              ('carbohydrates' in item.nutrients) &&
+              ('fat' in item.nutrients) &&
+              isValidNumber(item.nutrients.calories, 0, 10000) &&
+              isValidNumber(item.nutrients.protein, 0, 1000) &&
+              isValidNumber(item.nutrients.carbohydrates, 0, 1000) &&
+              isValidNumber(item.nutrients.fat, 0, 1000) &&
+              // For dishes, validate ingredients
+              (
+                (item.type == 'food') ||
+                (
+                  item.type == 'dish' &&
+                  ('ingredients' in item) &&
+                  item.ingredients is list &&
+                  item.ingredients.all(ingredient =>
+                    ingredient is map &&
+                    ('id' in ingredient) &&
+                    ('name' in ingredient) &&
+                    ('servingSize' in ingredient) &&
+                    ('nutrients' in ingredient) &&
+                    isValidString(ingredient.id, 1, 100) &&
+                    isValidString(ingredient.name, 1, 100) &&
+                    isValidNumber(ingredient.servingSize, 0, 10000) &&
+                    ingredient.nutrients is map &&
+                    ('calories' in ingredient.nutrients) &&
+                    ('protein' in ingredient.nutrients) &&
+                    ('carbohydrates' in ingredient.nutrients) &&
+                    ('fat' in ingredient.nutrients) &&
+                    isValidNumber(ingredient.nutrients.calories, 0, 10000) &&
+                    isValidNumber(ingredient.nutrients.protein, 0, 1000) &&
+                    isValidNumber(ingredient.nutrients.carbohydrates, 0, 1000) &&
+                    isValidNumber(ingredient.nutrients.fat, 0, 1000)
+                  )
+                )
+              )
+            )
           )) &&
           
           // Optional fields validation
@@ -385,40 +440,6 @@ service cloud.firestore {
           (!('category' in request.resource.data) || isValidString(request.resource.data.category, 0, 50)) &&
           (!('brand' in request.resource.data) || isValidString(request.resource.data.brand, 0, 100)) &&
           (!('notes' in request.resource.data) || isValidString(request.resource.data.notes, 0, 500)) &&
-          (!('lastUpdated' in request.resource.data) || request.resource.data.lastUpdated is timestamp)
-        );
-    }
-    
-    /**
-     * @description Allows users to read and write their own evolution photos.
-     * @path /users/{userId}/evolutionPhotos/{photoId}
-     * @allow (create) - User with UID 'user_abc' can create an evolution photo under their profile.
-     * @allow (get) - User with UID 'user_abc' can read an evolution photo under their profile.
-     * @allow (update) - User with UID 'user_abc' can update an evolution photo under their profile.
-     * @allow (delete) - User with UID 'user_abc' can delete an evolution photo under their profile.
-     * @deny (create) - User with UID 'user_xyz' cannot create an evolution photo for user 'user_abc'.
-     * @deny (get) - User with UID 'user_xyz' cannot read user 'user_abc''s evolution photos.
-     * @principle Enforces document ownership for writes.
-     */
-    match /users/{userId}/evolutionPhotos/{photoId} {
-      allow get, list, create, update, delete: if isOwner(userId);
-      
-      // Data validation for evolution photos
-      allow create, update: if isOwner(userId) &&
-        (
-          // Required fields
-          ('imageUrl' in request.resource.data) &&
-          ('date' in request.resource.data) &&
-          
-          // Validate field types
-          isValidString(request.resource.data.imageUrl, 1, 2000) &&
-          request.resource.data.date is timestamp &&
-          
-          // Optional fields validation
-          (!('weight' in request.resource.data) || isValidNumber(request.resource.data.weight, 0, 1000)) &&
-          (!('width' in request.resource.data) || isValidNumber(request.resource.data.width, 0, 10000)) &&
-          (!('height' in request.resource.data) || isValidNumber(request.resource.data.height, 0, 10000)) &&
-          (!('publicId' in request.resource.data) || isValidString(request.resource.data.publicId, 0, 200)) &&
           (!('lastUpdated' in request.resource.data) || request.resource.data.lastUpdated is timestamp)
         );
     }

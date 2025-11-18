@@ -10,6 +10,8 @@ import { DishEditor } from "@/components/dishes/dish-editor";
 import { Dish, FoodItemData } from "@/lib/types";
 import { useAppContext } from "@/app/context/AppContext";
 import { Skeleton } from "@/components/ui/skeleton";
+import { motion } from "framer-motion";
+import { CookingPot, Flame, Fish, Utensils, Wheat, Droplet, ChevronRight } from "lucide-react";
 
 export default function LogPage() {
     const { dishes, isDishesLoading } = useAppContext();
@@ -77,10 +79,10 @@ export default function LogPage() {
                             </div>
                             {isLoading ? (
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <Skeleton className="h-24 w-full" />
-                                    <Skeleton className="h-24 w-full" />
-                                    <Skeleton className="h-24 w-full" />
-                                    <Skeleton className="h-24 w-full" />
+                                    <Skeleton className="h-32 w-full rounded-xl" />
+                                    <Skeleton className="h-32 w-full rounded-xl" />
+                                    <Skeleton className="h-32 w-full rounded-xl" />
+                                    <Skeleton className="h-32 w-full rounded-xl" />
                                 </div>
                             ) : filteredDishes.length === 0 ? (
                                 <div className="text-center text-muted-foreground py-16 border-2 border-dashed border-muted-foreground/20 rounded-lg">
@@ -96,17 +98,82 @@ export default function LogPage() {
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     {filteredDishes.map(dish => {
                                         const totals = calculateDishTotals(dish.ingredients);
+                                        const ingredientCount = dish.ingredients.length;
+                                        
                                         return (
-                                            <button key={dish.id} onClick={() => openEditDishEditor(dish)} className="p-4 rounded-lg bg-muted/40 text-left hover:bg-muted/80 transition-colors">
-                                                <h3 className="font-semibold">{dish.name}</h3>
-                                                <p className="text-sm text-muted-foreground">{dish.description}</p>
-                                                <div className="flex items-center gap-4 text-xs mt-2 text-muted-foreground">
-                                                    <span>{totals.calories.toFixed(0)} kcal</span>
-                                                    <span>P: {totals.protein.toFixed(1)}g</span>
-                                                    <span>H: {totals.carbs.toFixed(1)}g</span>
-                                                    <span>G: {totals.fat.toFixed(1)}g</span>
-                                                </div>
-                                            </button>
+                                            <motion.div
+                                                key={dish.id}
+                                                layout
+                                                initial={{ opacity: 0, y: 20 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                whileHover={{ y: -5 }}
+                                                transition={{ type: "spring", stiffness: 400, damping: 20 }}
+                                                className="group relative"
+                                            >
+                                                <button 
+                                                    onClick={() => openEditDishEditor(dish)}
+                                                    className="w-full h-full text-left rounded-xl bg-gradient-to-br from-background/80 to-muted/40 border border-muted/50 p-5 shadow-sm hover:shadow-md transition-all duration-300 backdrop-blur-sm"
+                                                >
+                                                    {/* Header with dish name and icon */}
+                                                    <div className="flex items-start justify-between">
+                                                        <div className="flex items-start gap-3">
+                                                            <div className="p-2 rounded-lg bg-primary/10 text-primary">
+                                                                <CookingPot className="h-5 w-5" />
+                                                            </div>
+                                                            <div>
+                                                                <h3 className="font-bold text-lg text-foreground group-hover:text-primary transition-colors">
+                                                                    {dish.name}
+                                                                </h3>
+                                                                {dish.description && (
+                                                                    <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
+                                                                        {dish.description}
+                                                                    </p>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    
+                                                    {/* Stats section */}
+                                                    <div className="mt-4 flex items-center justify-between">
+                                                        <div className="flex items-center gap-4">
+                                                            <div className="flex items-center gap-1.5 text-xs">
+                                                                <Flame className="h-4 w-4 text-orange-500" />
+                                                                <span className="font-semibold">{totals.calories.toFixed(0)}</span>
+                                                                <span className="text-muted-foreground">kcal</span>
+                                                            </div>
+                                                            
+                                                            <div className="flex items-center gap-1.5 text-xs">
+                                                                <Fish className="h-4 w-4 text-blue-500" />
+                                                                <span className="font-semibold">{totals.protein.toFixed(1)}</span>
+                                                                <span className="text-muted-foreground">g</span>
+                                                            </div>
+                                                        </div>
+                                                        
+                                                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                                                            <Utensils className="h-4 w-4" />
+                                                            <span>{ingredientCount} {ingredientCount === 1 ? 'ingrediente' : 'ingredientes'}</span>
+                                                        </div>
+                                                    </div>
+                                                    
+                                                    {/* Macro details */}
+                                                    <div className="mt-3 flex items-center justify-between text-xs">
+                                                        <div className="flex items-center gap-3">
+                                                            <div className="flex items-center gap-1 text-chart-2">
+                                                                <Wheat className="h-3.5 w-3.5" />
+                                                                <span>{totals.carbs.toFixed(1)}g</span>
+                                                            </div>
+                                                            <div className="flex items-center gap-1 text-chart-3">
+                                                                <Droplet className="h-3.5 w-3.5" />
+                                                                <span>{totals.fat.toFixed(1)}g</span>
+                                                            </div>
+                                                        </div>
+                                                        
+                                                        <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                                                            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                                                        </div>
+                                                    </div>
+                                                </button>
+                                            </motion.div>
                                         )
                                     })}
                                 </div>

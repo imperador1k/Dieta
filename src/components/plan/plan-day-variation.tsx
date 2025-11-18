@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Button } from "../ui/button";
@@ -7,6 +6,7 @@ import { Input } from "../ui/input";
 import { Pencil, PlusCircle, Trash2, Save, X } from "lucide-react";
 import type { Variation } from "@/lib/types";
 import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
 
 type PlanDayVariationProps = {
     variations: Variation[];
@@ -14,12 +14,21 @@ type PlanDayVariationProps = {
 };
 
 export default function PlanDayVariation({ variations, onVariationsChange }: PlanDayVariationProps) {
+    const { toast } = useToast();
     const [newVariationName, setNewVariationName] = useState("");
     const [editingId, setEditingId] = useState<string | null>(null);
     const [editingName, setEditingName] = useState("");
 
     const addVariation = () => {
-        if (newVariationName.trim() === "") return;
+        if (newVariationName.trim() === "") {
+            toast({
+                title: "Nome inválido",
+                description: "Por favor, introduza um nome para a variação.",
+                variant: "destructive",
+            });
+            return;
+        }
+        
         const newVariation: Variation = {
             id: `var-${Date.now()}`,
             name: newVariationName,
@@ -29,16 +38,32 @@ export default function PlanDayVariation({ variations, onVariationsChange }: Pla
     };
 
     const removeVariation = (id: string) => {
+        // Prevent removing all variations
+        if (variations.length <= 1) {
+            toast({
+                title: "Não é possível remover",
+                description: "Deve existir pelo menos uma variação.",
+                variant: "destructive",
+            });
+            return;
+        }
         onVariationsChange(variations.filter(v => v.id !== id));
     };
 
     const handleEditClick = (variation: Variation) => {
         setEditingId(variation.id);
-        setEditingName(variation.name);
+        setEditingName(variation.name || '');
     }
 
     const handleSaveName = (id: string) => {
-        if (editingName.trim() === "") return;
+        if (editingName.trim() === "") {
+            toast({
+                title: "Nome inválido",
+                description: "Por favor, introduza um nome para a variação.",
+                variant: "destructive",
+            });
+            return;
+        }
         onVariationsChange(variations.map(v => v.id === id ? { ...v, name: editingName } : v));
         setEditingId(null);
         setEditingName("");

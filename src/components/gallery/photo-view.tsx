@@ -2,69 +2,142 @@
 
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import { pt } from 'date-fns/locale';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import type { EvolutionPhoto } from '@/lib/types';
-import { Weight, Calendar, X } from 'lucide-react';
+import { Weight, Calendar, X, Trash2, Info } from 'lucide-react';
 import { Button } from '../ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 
 interface PhotoViewProps {
   photo: EvolutionPhoto | null;
   onClose: () => void;
+  onDelete?: (photoId: string, publicId?: string) => void;
 }
 
-export default function PhotoView({ photo, onClose }: PhotoViewProps) {
+export default function PhotoView({ photo, onClose, onDelete }: PhotoViewProps) {
   return (
     <Dialog open={!!photo} onOpenChange={(isOpen) => !isOpen && onClose()}>
       <AnimatePresence>
         {photo && (
           <DialogContent className="p-0 sm:p-4 border-0 bg-transparent shadow-none w-full max-w-full h-full max-h-full flex flex-col items-center justify-center">
+            {/* Hidden title for accessibility */}
+            <VisuallyHidden>
+              <DialogTitle>Detalhes da foto de evolução</DialogTitle>
+            </VisuallyHidden>
+            
             <motion.div
               layoutId={`photo-${photo.id}`}
               className="relative w-full h-full flex flex-col items-center justify-center"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
             >
-                <Button variant="ghost" size="icon" className="absolute top-4 right-4 z-20 h-10 w-10 rounded-full bg-black/40 text-white hover:bg-black/60 hover:text-white" onClick={onClose}>
-                    <X className="h-5 w-5" />
-                    <span className="sr-only">Fechar</span>
+              {/* Action Buttons - Desktop */}
+              <div className="absolute top-4 right-4 z-20 flex gap-2 hidden sm:flex">
+                <Button 
+                  variant="secondary" 
+                  size="icon" 
+                  className="h-9 w-9 rounded-full bg-background/80 backdrop-blur-sm border border-border shadow-lg hover:bg-background"
+                  onClick={onClose}
+                >
+                  <X className="h-4 w-4" />
+                  <span className="sr-only">Fechar</span>
                 </Button>
-                
-                <div className="flex-1 w-full h-full flex items-center justify-center overflow-hidden p-4 sm:p-8">
-                    <div className="relative w-auto h-auto max-w-full max-h-full">
-                        <Image
-                          src={photo.imageUrl}
-                          alt={`Evolução em ${photo.date}`}
-                          width={photo.width}
-                          height={photo.height}
-                          className="w-auto h-auto max-w-full max-h-full object-contain rounded-none sm:rounded-xl shadow-2xl"
-                          data-ai-hint={photo.imageHint}
-                        />
-                    </div>
-                </div>
-
-                {photo.date && (
-                    <motion.div 
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.2 }}
-                        className="flex-shrink-0 w-full p-4 bg-gradient-to-t from-black/80 via-black/40 to-transparent text-white sm:rounded-b-xl"
-                    >
-                      <div className="flex items-center justify-around max-w-md mx-auto">
-                        <div className="flex items-center gap-2">
-                          <Calendar className="w-4 h-4" />
-                          <span className="font-semibold">
-                            {format(new Date(photo.date), "PPP", { locale: pt })}
-                          </span>
-                        </div>
-                        {photo.weight && (
-                            <div className="flex items-center gap-2">
-                              <Weight className="w-4 h-4" />
-                              <span className="font-semibold">{photo.weight} kg</span>
-                            </div>
-                        )}
-                      </div>
-                    </motion.div>
+                {onDelete && (
+                  <Button 
+                    variant="secondary" 
+                    size="icon" 
+                    className="h-9 w-9 rounded-full bg-background/80 backdrop-blur-sm border border-border shadow-lg hover:bg-red-50 hover:text-red-500" 
+                    onClick={() => onDelete(photo.id, photo.publicId)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    <span className="sr-only">Eliminar</span>
+                  </Button>
                 )}
+              </div>
+              
+              {/* Action Buttons - Mobile */}
+              <div className="absolute top-4 right-4 z-20 flex gap-2 sm:hidden">
+                <Button 
+                  variant="secondary" 
+                  size="icon" 
+                  className="h-8 w-8 rounded-full bg-background/80 backdrop-blur-sm border border-border shadow-lg hover:bg-background"
+                  onClick={onClose}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+              
+              {/* Main Image Area */}
+              <div className="flex-1 w-full h-full flex items-center justify-center overflow-hidden p-4 sm:p-6">
+                <div className="relative w-auto h-auto max-w-full max-h-full">
+                  <Image
+                    src={photo.imageUrl}
+                    alt={`Evolução em ${photo.date}`}
+                    width={photo.width}
+                    height={photo.height}
+                    className="w-auto h-auto max-w-full max-h-full object-contain rounded-lg shadow-2xl"
+                    data-ai-hint={photo.imageHint}
+                  />
+                </div>
+              </div>
+
+              {/* Photo Information Panel - Minimalist version */}
+              <motion.div 
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 10 }}
+                transition={{ delay: 0.1, duration: 0.2 }}
+                className="flex-shrink-0 w-full max-w-2xl p-4"
+              >
+                <Card className="bg-background/90 backdrop-blur-xl border-border shadow-lg rounded-xl overflow-hidden">
+                  <CardContent className="p-3">
+                    <div className="flex flex-wrap items-center justify-center gap-4 md:gap-6">
+                      <div className="flex items-center gap-2">
+                        <Calendar className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm font-medium">
+                          {format(parseISO(photo.date), "d MMM yyyy", { locale: pt })}
+                        </span>
+                      </div>
+                      
+                      <div className="flex items-center gap-2">
+                        <Weight className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm font-medium">{photo.weight} kg</span>
+                      </div>
+                      
+                      <div className="flex items-center gap-2 text-muted-foreground">
+                        <Info className="h-4 w-4" />
+                        <span className="text-xs">
+                          {photo.width} × {photo.height}px
+                        </span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+                
+                {/* Mobile Action Buttons */}
+                {onDelete && (
+                  <div className="mt-3 sm:hidden">
+                    <Button 
+                      variant="destructive" 
+                      size="sm" 
+                      className="w-full"
+                      onClick={() => {
+                        if (confirm('Tem certeza que deseja eliminar esta foto?')) {
+                          onDelete(photo.id, photo.publicId);
+                        }
+                      }}
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Eliminar Foto
+                    </Button>
+                  </div>
+                )}
+              </motion.div>
             </motion.div>
           </DialogContent>
         )}

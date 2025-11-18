@@ -9,6 +9,7 @@ import {
   BarChart2,
   UtensilsCrossed,
   GalleryThumbnails,
+  LogOut,
 } from 'lucide-react';
 import { Icons } from '@/components/icons';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
@@ -16,6 +17,7 @@ import { Button } from '../ui/button';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
 import { useState } from 'react';
+import { LogoutButton } from '@/components/auth/logout-button';
 
 const navItems = [
   { href: '/', label: 'Dashboard', icon: LayoutDashboard },
@@ -66,14 +68,17 @@ function Header() {
                 </ul>
             </nav>
         </div>
-        <Link href="/profile">
-            <Avatar className='h-10 w-10 border-2 border-transparent transition-all duration-300 hover:border-primary cursor-pointer'>
-            <AvatarImage src="https://github.com/shadcn.png" alt="@shadcn" />
-            <AvatarFallback>
-                <Icons.Logo className="h-5 w-5" />
-            </AvatarFallback>
-            </Avatar>
-        </Link>
+        <div className="flex items-center gap-2">
+          <Link href="/profile">
+              <Avatar className='h-10 w-10 border-2 border-transparent transition-all duration-300 hover:border-primary cursor-pointer'>
+              <AvatarImage src="https://github.com/shadcn.png" alt="@shadcn" />
+              <AvatarFallback>
+                  <Icons.Logo className="h-5 w-5" />
+              </AvatarFallback>
+              </Avatar>
+          </Link>
+          <LogoutButton />
+        </div>
       </motion.div>
     </header>
   );

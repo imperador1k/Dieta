@@ -63,9 +63,10 @@ export interface EvolutionPhoto {
     date: string; // ISO 8601 date string
     imageUrl: string;
     imageHint?: string;
-    weight?: number;
+    weight: number; // Made required since we always set it now
     width: number;
     height: number;
+    publicId?: string; // Cloudinary public ID for image management
 }
 
 export interface BodyMeasurement {

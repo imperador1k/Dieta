@@ -12,7 +12,7 @@ import { FoodSearchDialog } from "@/components/meals/food-search-dialog";
 import FoodItem from "@/components/meals/food-item";
 import { generateRecipe } from "@/app/log/actions";
 import { PlusCircle, Sparkles, Loader2, Save, CookingPot, Pencil, Trash, Flame, Fish, Wheat, Droplet, X } from "lucide-react";
-import type { Dish, FoodItemData } from "@/lib/types";
+import type { Dish, FoodItemData, MealItem } from "@/lib/types";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "../ui/alert-dialog";
 import { useAppContext } from "@/app/context/AppContext";
 
@@ -36,7 +36,13 @@ const MacroBadge = ({ Icon, value, unit, className }: { Icon: React.ElementType,
 
 export function DishEditor({ open, onOpenChange, dish: initialDish }: DishEditorProps) {
     const { saveDish, deleteDish } = useAppContext();
-    const [dish, setDish] = useState<Dish>(initialDish || { id: '', name: '', description: '', ingredients: [], instructions: '' });
+    const [dish, setDish] = useState<Dish>(initialDish || { 
+        id: `dish-${Date.now()}`, 
+        name: '', 
+        description: '', 
+        ingredients: [], 
+        instructions: '' 
+    });
     const [isSearchOpen, setIsSearchOpen] = useState(false);
     const [foodToEdit, setFoodToEdit] = useState<FoodItemData | null>(null);
     const [isGenerating, startGenerating] = useTransition();
@@ -57,17 +63,21 @@ export function DishEditor({ open, onOpenChange, dish: initialDish }: DishEditor
         setDish(prev => ({ ...prev, [field]: value }));
     };
 
-    const handleFoodConfirm = (food: FoodItemData) => {
-        const existingIndex = dish.ingredients.findIndex(item => item.id === food.id);
-        let newIngredients;
-        if (existingIndex > -1) {
-            newIngredients = [...dish.ingredients];
-            newIngredients[existingIndex] = food;
-        } else {
-            newIngredients = [...dish.ingredients, { ...food, eaten: undefined }]; // eaten is not relevant for dish ingredients
+    const handleFoodConfirm = (item: MealItem) => {
+        // Check if the item is a food item (not a dish)
+        if (item.type === 'food') {
+            const food = item as FoodItemData;
+            const existingIndex = dish.ingredients.findIndex(ingredient => ingredient.id === food.id);
+            let newIngredients;
+            if (existingIndex > -1) {
+                newIngredients = [...dish.ingredients];
+                newIngredients[existingIndex] = food;
+            } else {
+                newIngredients = [...dish.ingredients, { ...food, eaten: undefined }]; // eaten is not relevant for dish ingredients
+            }
+            updateDishField('ingredients', newIngredients);
+            setFoodToEdit(null);
         }
-        updateDishField('ingredients', newIngredients);
-        setFoodToEdit(null);
     };
     
     const handleRemoveFood = (foodId: string) => {
@@ -89,7 +99,36 @@ export function DishEditor({ open, onOpenChange, dish: initialDish }: DishEditor
     };
 
     const handleSave = () => {
-        saveDish(dish);
+        // Ensure the dish has a valid id
+        let dishToSave = dish;
+        if (!dish.id || dish.id.startsWith('dish-undefined')) {
+            dishToSave = {
+                ...dish,
+                id: `dish-${Date.now()}`
+            };
+        }
+        
+        // Validate and clean the dish object to ensure no undefined values
+        const cleanedDish: Dish = {
+            id: dishToSave.id || `dish-${Date.now()}`,
+            name: dishToSave.name || '',
+            description: dishToSave.description || '',
+            ingredients: dishToSave.ingredients.map(ingredient => ({
+                id: ingredient.id,
+                fdcId: ingredient.fdcId,
+                description: ingredient.description || '',
+                servingSize: ingredient.servingSize || 0,
+                nutrients: {
+                    calories: ingredient.nutrients.calories || 0,
+                    protein: ingredient.nutrients.protein || 0,
+                    fat: ingredient.nutrients.fat || 0,
+                    carbohydrates: ingredient.nutrients.carbohydrates || 0
+                }
+            })),
+            instructions: dishToSave.instructions || ''
+        };
+        
+        saveDish(cleanedDish);
         onOpenChange(false);
     };
     

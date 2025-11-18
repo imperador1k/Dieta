@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 import type { Plan } from "@/lib/types";
 
 
-export default function PlanList({ plans, selectedPlanId, onSelectPlan }: { plans: Plan[], selectedPlanId: string, onSelectPlan: (plan: Plan) => void }) {
+export default function PlanList({ plans, selectedPlanId, onSelectPlan, onCreatePlan }: { plans: Plan[], selectedPlanId: string, onSelectPlan: (plan: Plan) => void, onCreatePlan: () => void }) {
     return (
         <div className="space-y-4">
             <div className="flex items-center justify-between">
@@ -15,7 +15,7 @@ export default function PlanList({ plans, selectedPlanId, onSelectPlan }: { plan
                     <FileText className="text-primary"/>
                     Meus Planos
                 </h2>
-                <Button variant="ghost" size="sm">
+                <Button variant="ghost" size="sm" onClick={onCreatePlan}>
                     <PlusCircle className="mr-2 h-4 w-4" />
                     Criar
                 </Button>
