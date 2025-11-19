@@ -86,7 +86,7 @@ export default function GalleryGrid({ photos, onPhotoSelect, onDeletePhoto }: Ga
 
   return (
     <motion.div
-      className="columns-2 xs:columns-3 sm:columns-4 md:columns-5 lg:columns-6 xl:columns-7 2xl:columns-8 gap-2 sm:gap-3"
+      className="columns-2 xs:columns-2 sm:columns-3 md:columns-4 lg:columns-5 xl:columns-6 2xl:columns-7 gap-1.5 xs:gap-2 sm:gap-3"
       variants={containerVariants}
       initial="hidden"
       animate="visible"
@@ -98,14 +98,14 @@ export default function GalleryGrid({ photos, onPhotoSelect, onDeletePhoto }: Ga
         return (
           <motion.div
             key={photo.id}
-            className="mb-2 sm:mb-3 break-inside-avoid relative group overflow-hidden rounded-lg sm:rounded-xl shadow-sm hover:shadow-md transition-all duration-300"
+            className="mb-1.5 xs:mb-2 sm:mb-3 break-inside-avoid relative group overflow-hidden rounded-lg sm:rounded-xl shadow-sm hover:shadow-md transition-all duration-300"
             variants={itemVariants}
             layoutId={`photo-${photo.id}`}
             transition={{ duration: 0.2 }}
           >
             {/* Photo */}
             <div 
-              className="relative aspect-square overflow-hidden cursor-pointer"
+              className="relative overflow-hidden cursor-pointer"
               onClick={(e) => handleClick(photo, e)}
               onMouseDown={(e) => handlePressStart(photo.id, e)}
               onMouseUp={(e) => handlePressEnd(e)}
@@ -114,17 +114,21 @@ export default function GalleryGrid({ photos, onPhotoSelect, onDeletePhoto }: Ga
               onTouchEnd={(e) => handlePressEnd(e)}
               onTouchCancel={(e) => handlePressEnd(e)}
             >
-              <Image
-                src={photo.imageUrl}
-                alt={`Evolução em ${photo.date}`}
-                fill
-                className={cn(
-                  "object-cover transition-transform duration-500 ease-in-out",
-                  isPressing ? "scale-95" : "group-hover:scale-105"
-                )}
-                sizes="(max-width: 320px) 50vw, (max-width: 480px) 33vw, (max-width: 640px) 25vw, (max-width: 768px) 20vw, (max-width: 1024px) 16vw, (max-width: 1280px) 14vw, (max-width: 1536px) 12vw, 11vw"
-                data-ai-hint={photo.imageHint}
-              />
+              {/* Remove fixed aspect ratio to accommodate any photo size */}
+              <div className="relative">
+                <Image
+                  src={photo.imageUrl}
+                  alt={`Evolução em ${photo.date}`}
+                  width={photo.width}
+                  height={photo.height}
+                  className={cn(
+                    "object-cover transition-transform duration-500 ease-in-out w-full h-auto",
+                    isPressing ? "scale-95" : "group-hover:scale-105"
+                  )}
+                  sizes="(max-width: 320px) 50vw, (max-width: 480px) 50vw, (max-width: 640px) 33vw, (max-width: 768px) 25vw, (max-width: 1024px) 20vw, (max-width: 1280px) 16vw, (max-width: 1536px) 14vw, 12vw"
+                  data-ai-hint={photo.imageHint}
+                />
+              </div>
               
               {/* Overlay */}
               <div className={cn(
@@ -134,7 +138,7 @@ export default function GalleryGrid({ photos, onPhotoSelect, onDeletePhoto }: Ga
               
               {/* Action Buttons - Visible on long press */}
               <div className={cn(
-                "absolute top-1.5 right-1.5 sm:top-2 sm:right-2 flex gap-1 sm:gap-1.5 transition-all duration-200",
+                "absolute top-1 right-1 sm:top-1.5 sm:right-1.5 flex gap-1 transition-all duration-200",
                 isPressed ? "opacity-100 scale-100" : "opacity-0 scale-90 group-hover:opacity-100 group-hover:scale-100"
               )}>
                 <button
@@ -166,7 +170,7 @@ export default function GalleryGrid({ photos, onPhotoSelect, onDeletePhoto }: Ga
               
               {/* Date Badge */}
               <div className={cn(
-                "absolute top-1.5 left-1.5 sm:top-2 sm:left-2 bg-black/50 backdrop-blur-sm rounded-md px-1.5 py-1 transition-opacity duration-300",
+                "absolute top-1 left-1 sm:top-1.5 sm:left-1.5 bg-black/50 backdrop-blur-sm rounded-md px-1.5 py-1 transition-opacity duration-300",
                 isPressed ? "opacity-100" : "opacity-0 group-hover:opacity-100"
               )}>
                 <div className="flex items-center gap-1 text-white text-[9px] sm:text-[10px] font-medium">

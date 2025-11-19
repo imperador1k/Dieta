@@ -317,7 +317,7 @@ export default function GalleryPage() {
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.8, opacity: 0 }}
               transition={{ type: "spring", stiffness: 300, damping: 20 }}
-              className="bg-gradient-to-br from-background to-muted p-8 rounded-2xl shadow-2xl border border-border max-w-md w-full mx-4 text-center"
+              className="bg-gradient-to-br from-background to-muted p-6 sm:p-8 rounded-2xl shadow-2xl border border-border max-w-md w-full mx-4 text-center"
             >
               <motion.div
                 initial={{ scale: 0 }}
@@ -336,9 +336,9 @@ export default function GalleryPage() {
                     repeat: Infinity,
                     repeatType: "reverse"
                   }}
-                  className="relative bg-primary/10 p-6 rounded-full inline-flex"
+                  className="relative bg-primary/10 p-5 sm:p-6 rounded-full inline-flex"
                 >
-                  <CloudUpload className="h-16 w-16 text-primary" />
+                  <CloudUpload className="h-12 w-12 sm:h-16 sm:w-16 text-primary" />
                 </motion.div>
               </motion.div>
               
@@ -346,7 +346,7 @@ export default function GalleryPage() {
                 initial={{ y: 20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.3 }}
-                className="text-2xl font-bold text-foreground mb-2"
+                className="text-xl sm:text-2xl font-bold text-foreground mb-2"
               >
                 A carregar foto...
               </motion.h2>
@@ -355,7 +355,7 @@ export default function GalleryPage() {
                 initial={{ y: 20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.4 }}
-                className="text-muted-foreground mb-6"
+                className="text-muted-foreground mb-6 text-sm sm:text-base"
               >
                 A sua foto está a ser carregada para a nuvem
               </motion.p>
@@ -364,7 +364,7 @@ export default function GalleryPage() {
                 initial={{ y: 20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.5 }}
-                className="w-full bg-muted rounded-full h-3 mb-4 overflow-hidden"
+                className="w-full bg-muted rounded-full h-2.5 sm:h-3 mb-4 overflow-hidden"
               >
                 <motion.div
                   className="h-full bg-primary rounded-full"
@@ -477,8 +477,8 @@ export default function GalleryPage() {
         </DialogContent>
       </Dialog>
       
-      {/* Filters Section - Compact version for larger screens, sheet for mobile */}
-      <div className="pt-20 pb-4 px-4">
+      {/* Filters Section - More mobile-friendly */}
+      <div className="pt-20 pb-4 px-2 sm:px-4">
         <div className="container mx-auto">
           {/* Desktop Filters */}
           <div className="hidden md:flex items-center gap-2 flex-wrap">
@@ -621,7 +621,7 @@ export default function GalleryPage() {
             )}
           </div>
           
-          {/* Mobile Filters - Always use sheet on mobile */}
+          {/* Mobile Filters - More compact and touch-friendly */}
           <div className="md:hidden">
             <div className="flex items-center gap-2">
               <div className="relative flex-1">
@@ -630,13 +630,13 @@ export default function GalleryPage() {
                   placeholder="Pesquisar..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 pr-4 py-2 w-full"
+                  className="pl-10 pr-4 py-2 w-full text-sm"
                 />
               </div>
               
               <Sheet>
                 <SheetTrigger asChild>
-                  <Button variant="outline" size="icon">
+                  <Button variant="outline" size="icon" className="h-10 w-10">
                     <Filter className="h-4 w-4" />
                   </Button>
                 </SheetTrigger>
@@ -791,7 +791,7 @@ export default function GalleryPage() {
       </div>
       
       <main className="pb-8">
-        <div className="container mx-auto px-2 sm:px-4">
+        <div className="container mx-auto px-1 sm:px-2 md:px-4">
           {filteredAndSortedPhotos.length > 0 ? (
             <GalleryGrid
               photos={filteredAndSortedPhotos}
@@ -801,14 +801,14 @@ export default function GalleryPage() {
           ) : (
             <div className="text-center py-12">
               <div className="text-muted-foreground mb-4">
-                <div className="text-6xl mb-4">📸</div>
-                <h3 className="text-xl font-semibold mb-2">Nenhuma foto encontrada</h3>
-                <p className="mb-4">
+                <div className="text-4xl sm:text-6xl mb-4">📸</div>
+                <h3 className="text-lg sm:text-xl font-semibold mb-2">Nenhuma foto encontrada</h3>
+                <p className="mb-4 text-sm sm:text-base">
                   {photos.length === 0 
                     ? "Ainda não adicionou nenhuma foto à sua galeria de evolução." 
                     : "Nenhuma foto corresponde aos filtros selecionados."}
                 </p>
-                <Button onClick={handleAddPhotoClick}>
+                <Button onClick={handleAddPhotoClick} size="sm" className="sm:text-base">
                   Adicionar Primeira Foto
                 </Button>
               </div>

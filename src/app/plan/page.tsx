@@ -33,6 +33,12 @@ export default function PlanPage() {
             // Set initial selected plan to the active one, or the first one.
             if (!selectedPlan) {
                 setSelectedPlan(activePlan || plans[0]);
+            } else {
+                // Update selectedPlan if it has been updated in the plans array
+                const updatedPlan = plans.find(p => p.id === selectedPlan.id);
+                if (updatedPlan && JSON.stringify(updatedPlan) !== JSON.stringify(selectedPlan)) {
+                    setSelectedPlan(updatedPlan);
+                }
             }
         }
     }, [plans, isPlansLoading, activePlan, selectedPlan]);
@@ -166,24 +172,65 @@ export default function PlanPage() {
 
     return (
         <AppShell>
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <div className="lg:col-span-1">
-                   <PlanList 
-                        plans={plans}
-                        selectedPlanId={selectedPlan?.id || ''}
-                        onSelectPlan={handleSelectPlan}
-                        onCreatePlan={handleCreatePlan}
-                   />
+            <div className="space-y-6">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                        <h1 className="text-3xl font-bold tracking-tight">Gestão de Planos</h1>
+                        <p className="text-muted-foreground">Crie e gerencie seus planos de dieta personalizados</p>
+                    </div>
+                    <Button onClick={handleCreatePlan} className="w-full sm:w-auto">
+                        <PlusCircle className="mr-2 h-4 w-4" />
+                        Novo Plano
+                    </Button>
                 </div>
-                <div className="lg:col-span-2">
-                    {selectedPlan && (
-                        <PlanDetails 
-                            key={selectedPlan.id}
-                            plan={selectedPlan}
-                            onSetActive={handleSetActivePlan}
-                            onVariationsChange={(newVariations) => updatePlanVariations(selectedPlan.id, newVariations)}
-                        />
-                    )}
+                
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <div className="lg:col-span-1">
+                        <Card className="glass-card border-0 shadow-lg">
+                            <CardHeader className="border-b border-white/10">
+                                <CardTitle className="flex items-center gap-2">
+                                    <FileText className="text-primary" />
+                                    Meus Planos
+                                </CardTitle>
+                                <CardDescription>
+                                    Selecione um plano para ver detalhes ou criar um novo
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent className="pt-4">
+                                <PlanList 
+                                    plans={plans}
+                                    selectedPlanId={selectedPlan?.id || ''}
+                                    onSelectPlan={handleSelectPlan}
+                                    onCreatePlan={handleCreatePlan}
+                                />
+                            </CardContent>
+                        </Card>
+                    </div>
+                    
+                    <div className="lg:col-span-2">
+                        {selectedPlan ? (
+                            <PlanDetails 
+                                key={selectedPlan.id}
+                                plan={selectedPlan}
+                                onSetActive={handleSetActivePlan}
+                                onVariationsChange={(newVariations) => updatePlanVariations(selectedPlan.id, newVariations)}
+                            />
+                        ) : (
+                            <Card className="glass-card border-0 shadow-lg h-full flex items-center justify-center">
+                                <CardContent className="text-center py-12">
+                                    <FileText className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                                    <h3 className="text-xl font-semibold mb-2">Nenhum plano selecionado</h3>
+                                    <p className="text-muted-foreground mb-4">
+                                        Selecione um plano da lista ou crie um novo para começar
+                                    </p>
+                                    <Button onClick={handleCreatePlan}>
+                                        <PlusCircle className="mr-2 h-4 w-4" />
+                                        Criar Primeiro Plano
+                                    </Button>
+                                </CardContent>
+                            </Card>
+                        )}
+                    </div>
                 </div>
             </div>
         </AppShell>

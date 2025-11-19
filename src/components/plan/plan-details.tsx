@@ -7,7 +7,7 @@ import { Flame, Target, CheckCircle, Repeat, Fish, Wheat, Droplet, Pencil, Save,
 import PlanDayVariation from "./plan-day-variation";
 import type { Plan, Variation } from "@/lib/types";
 import { motion } from "framer-motion";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -37,6 +37,11 @@ export default function PlanDetails({ plan, onSetActive, onVariationsChange }: P
     const [isEditing, setIsEditing] = useState(false);
     const [editedPlan, setEditedPlan] = useState({...plan});
     const [isSaving, setIsSaving] = useState(false);
+    
+    // Update editedPlan when plan prop changes
+    useEffect(() => {
+        setEditedPlan({...plan});
+    }, [plan]);
     
     // Handle input changes
     const handleInputChange = (field: string, value: string | number) => {
@@ -100,26 +105,28 @@ export default function PlanDetails({ plan, onSetActive, onVariationsChange }: P
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
         >
-            <Card className="glass-card h-full">
-                <CardHeader>
-                    <div className="flex items-start justify-between gap-4">
-                        <div className="flex-1">
+            <Card className="glass-card border-0 shadow-lg">
+                <CardHeader className="border-b border-white/10">
+                    <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+                        <div className="flex-1 w-full">
                             {isEditing ? (
-                                <div className="space-y-2">
+                                <div className="space-y-4 w-full">
                                     <Input
                                         value={editedPlan.name || ''}
                                         onChange={(e) => handleInputChange('name', e.target.value)}
-                                        className="text-2xl font-bold"
+                                        className="text-2xl font-bold w-full"
+                                        placeholder="Nome do plano"
                                     />
                                     <Textarea
                                         value={editedPlan.description || ''}
                                         onChange={(e) => handleInputChange('description', e.target.value)}
-                                        className="text-muted-foreground"
+                                        className="text-muted-foreground w-full min-h-[100px]"
+                                        placeholder="Descrição do plano"
                                     />
                                 </div>
                             ) : (
                                 <div>
-                                    <div className="flex items-center gap-3">
+                                    <div className="flex flex-wrap items-center gap-3">
                                         <CardTitle className="text-2xl">{plan.name}</CardTitle>
                                         {plan.isActive ? (
                                             <Badge variant="default" className="bg-primary/20 text-primary border-primary/40">
@@ -130,17 +137,20 @@ export default function PlanDetails({ plan, onSetActive, onVariationsChange }: P
                                             <Badge variant="outline">Inativo</Badge>
                                         )}
                                     </div>
-                                    <CardDescription>{plan.description}</CardDescription>
+                                    <CardDescription className="mt-2">{plan.description}</CardDescription>
                                 </div>
                             )}
                         </div>
-                        <div className="flex gap-2">
+                        <div className="flex gap-2 flex-wrap">
                             {!plan.isActive && (
-                                <Button onClick={() => onSetActive(plan.id)}>Ativar Plano</Button>
+                                <Button onClick={() => onSetActive(plan.id)} size="sm">
+                                    <CheckCircle className="w-4 h-4 mr-2" />
+                                    Ativar Plano
+                                </Button>
                             )}
                             {isEditing ? (
                                 <>
-                                    <Button onClick={handleSave} disabled={isSaving}>
+                                    <Button onClick={handleSave} disabled={isSaving} size="sm">
                                         {isSaving ? (
                                             <>
                                                 <div className="mr-2 h-4 w-4 animate-spin">
@@ -155,13 +165,13 @@ export default function PlanDetails({ plan, onSetActive, onVariationsChange }: P
                                             </>
                                         )}
                                     </Button>
-                                    <Button variant="outline" onClick={handleCancel}>
+                                    <Button variant="outline" onClick={handleCancel} size="sm">
                                         <X className="w-4 h-4 mr-2" />
                                         Cancelar
                                     </Button>
                                 </>
                             ) : (
-                                <Button variant="outline" onClick={handleEdit}>
+                                <Button variant="outline" onClick={handleEdit} size="sm">
                                     <Pencil className="w-4 h-4 mr-2" />
                                     Editar
                                 </Button>
@@ -169,15 +179,15 @@ export default function PlanDetails({ plan, onSetActive, onVariationsChange }: P
                         </div>
                     </div>
                 </CardHeader>
-                <CardContent className="space-y-6">
-                    <div>
+                <CardContent className="space-y-6 pt-6">
+                    <div className="bg-muted/20 rounded-lg p-4">
                         <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
                             <Target className="w-5 h-5 text-primary"/> 
                             Metas Nutricionais
                         </h3>
                         {isEditing ? (
                             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                                <div className="col-span-1 md:col-span-1">
+                                <div className="space-y-2">
                                     <Label htmlFor="calories">Calorias (kcal)</Label>
                                     <Input
                                         id="calories"
@@ -217,9 +227,9 @@ export default function PlanDetails({ plan, onSetActive, onVariationsChange }: P
                             </div>
                         ) : (
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                <div className="flex flex-col items-center justify-center p-4 rounded-lg bg-primary/10 text-primary col-span-2 md:col-span-1">
+                                <div className="flex flex-col items-center justify-center p-4 rounded-lg bg-primary/10 text-primary">
                                     <Flame className="w-8 h-8 mb-1"/>
-                                    <p className="text-4xl font-bold">{plan.targets.calories}</p>
+                                    <p className="text-2xl font-bold">{plan.targets.calories}</p>
                                     <p className="text-sm -mt-1">kcal</p>
                                 </div>
                                 <MacroStat label="Proteína" value={plan.targets.protein} unit="g" color="hsl(var(--chart-1))" Icon={Fish} />
@@ -228,7 +238,8 @@ export default function PlanDetails({ plan, onSetActive, onVariationsChange }: P
                             </div>
                         )}
                     </div>
-                    <div>
+                    
+                    <div className="bg-muted/20 rounded-lg p-4">
                         <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
                             <Repeat className="w-5 h-5 text-primary"/> 
                             Variações do Dia
