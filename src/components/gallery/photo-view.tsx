@@ -22,7 +22,7 @@ export default function PhotoView({ photo, onClose, onDelete }: PhotoViewProps) 
     <Dialog open={!!photo} onOpenChange={(isOpen) => !isOpen && onClose()}>
       <AnimatePresence>
         {photo && (
-          <DialogContent className="p-0 sm:p-4 border-0 bg-transparent shadow-none w-full max-w-full h-full max-h-full flex flex-col items-center justify-center [&>button]:hidden">
+          <DialogContent className="p-0 sm:p-4 border-0 bg-transparent shadow-none w-full max-w-full h-full max-h-full flex flex-col items-center justify-center">
             {/* Hidden title for accessibility */}
             <VisuallyHidden>
               <DialogTitle>Detalhes da foto de evolução</DialogTitle>

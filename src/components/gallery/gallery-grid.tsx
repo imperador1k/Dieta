@@ -50,10 +50,9 @@ export default function GalleryGrid({ photos, onPhotoSelect, onDeletePhoto }: Ga
   };
 
   // Handle press start (for long press)
-  const handlePressStart = (photoId: string, e: React.MouseEvent | React.TouchEvent) => {
-    e.preventDefault();
+  const handlePressStart = (photoId: string) => {
     setIsPressing(true);
-    
+
     pressTimer.current = setTimeout(() => {
       setPressedPhotoId(photoId);
       setIsPressing(false);
@@ -61,8 +60,7 @@ export default function GalleryGrid({ photos, onPhotoSelect, onDeletePhoto }: Ga
   };
 
   // Handle press end/cancel
-  const handlePressEnd = (e: React.MouseEvent | React.TouchEvent) => {
-    e.preventDefault();
+  const handlePressEnd = () => {
     if (pressTimer.current) {
       clearTimeout(pressTimer.current);
       pressTimer.current = null;
@@ -73,13 +71,13 @@ export default function GalleryGrid({ photos, onPhotoSelect, onDeletePhoto }: Ga
   // Handle click (short press)
   const handleClick = (photo: EvolutionPhoto, e: React.MouseEvent) => {
     e.stopPropagation();
-    
+
     // If we were showing action buttons, hide them
     if (pressedPhotoId === photo.id) {
       setPressedPhotoId(null);
       return;
     }
-    
+
     // Otherwise, select the photo
     onPhotoSelect(photo);
   };
@@ -94,7 +92,7 @@ export default function GalleryGrid({ photos, onPhotoSelect, onDeletePhoto }: Ga
       {photos.map((photo, index) => {
         const weightTrend = getWeightTrend(index);
         const isPressed = pressedPhotoId === photo.id;
-        
+
         return (
           <motion.div
             key={photo.id}
@@ -104,15 +102,15 @@ export default function GalleryGrid({ photos, onPhotoSelect, onDeletePhoto }: Ga
             transition={{ duration: 0.2 }}
           >
             {/* Photo */}
-            <div 
+            <div
               className="relative overflow-hidden cursor-pointer"
               onClick={(e) => handleClick(photo, e)}
-              onMouseDown={(e) => handlePressStart(photo.id, e)}
-              onMouseUp={(e) => handlePressEnd(e)}
-              onMouseLeave={(e) => handlePressEnd(e)}
-              onTouchStart={(e) => handlePressStart(photo.id, e)}
-              onTouchEnd={(e) => handlePressEnd(e)}
-              onTouchCancel={(e) => handlePressEnd(e)}
+              onMouseDown={() => handlePressStart(photo.id)}
+              onMouseUp={() => handlePressEnd()}
+              onMouseLeave={() => handlePressEnd()}
+              onTouchStart={() => handlePressStart(photo.id)}
+              onTouchEnd={() => handlePressEnd()}
+              onTouchCancel={() => handlePressEnd()}
             >
               {/* Remove fixed aspect ratio to accommodate any photo size */}
               <div className="relative">
@@ -129,13 +127,13 @@ export default function GalleryGrid({ photos, onPhotoSelect, onDeletePhoto }: Ga
                   data-ai-hint={photo.imageHint}
                 />
               </div>
-              
+
               {/* Overlay */}
               <div className={cn(
                 "absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent transition-opacity duration-300",
                 isPressed ? "opacity-100" : "opacity-0 group-hover:opacity-100"
               )} />
-              
+
               {/* Action Buttons - Visible on long press */}
               <div className={cn(
                 "absolute top-1 right-1 sm:top-1.5 sm:right-1.5 flex gap-1 transition-all duration-200",
@@ -167,7 +165,7 @@ export default function GalleryGrid({ photos, onPhotoSelect, onDeletePhoto }: Ga
                   </button>
                 )}
               </div>
-              
+
               {/* Date Badge */}
               <div className={cn(
                 "absolute top-1 left-1 sm:top-1.5 sm:left-1.5 bg-black/50 backdrop-blur-sm rounded-md px-1.5 py-1 transition-opacity duration-300",
@@ -179,7 +177,7 @@ export default function GalleryGrid({ photos, onPhotoSelect, onDeletePhoto }: Ga
                 </div>
               </div>
             </div>
-            
+
             {/* Info Panel */}
             <div className={cn(
               "absolute bottom-0 left-0 right-0 p-2 sm:p-2.5 bg-gradient-to-t from-black/80 to-transparent transition-transform duration-300",
@@ -190,12 +188,12 @@ export default function GalleryGrid({ photos, onPhotoSelect, onDeletePhoto }: Ga
                   <Weight className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
                   <span>{photo.weight} kg</span>
                 </div>
-                
+
                 {weightTrend !== null && (
                   <div className={cn(
                     "flex items-center gap-1 text-[9px] sm:text-[10px] font-medium px-1.5 py-0.5 rounded-full",
-                    weightTrend < 0 ? "bg-green-500/20 text-green-400" : 
-                    weightTrend > 0 ? "bg-red-500/20 text-red-400" : "bg-blue-500/20 text-blue-400"
+                    weightTrend < 0 ? "bg-green-500/20 text-green-400" :
+                      weightTrend > 0 ? "bg-red-500/20 text-red-400" : "bg-blue-500/20 text-blue-400"
                   )}>
                     <TrendingUp className={cn(
                       "h-2 w-2 sm:h-2.5 sm:w-2.5",
